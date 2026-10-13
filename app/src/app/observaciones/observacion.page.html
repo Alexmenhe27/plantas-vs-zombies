@@ -1,0 +1,127 @@
+<ion-content>
+  @if (cargando() && !obs()) {
+    <div class="centro"><ion-spinner name="crescent" /></div>
+  } @else if (!obs()) {
+    <div class="vacio">
+      <p>No encontramos esta observación.</p>
+      <a class="boton" routerLink="/app/historial">Ir al historial</a>
+    </div>
+  } @else {
+    @let o = obs()!;
+    <div class="hero" [class.corto]="vista() !== 'identificada'">
+      <pvz-foto class="foto" [src]="url()" alt="Tu foto" [diferida]="false" />
+      <div class="barra-sup">
+        <button type="button" aria-label="Volver" (click)="volver()"><ion-icon name="arrow-back" /></button>
+      </div>
+      @if (vista() === 'identificada' && nueva()) {
+        <span class="exito"><ion-icon name="checkmark-circle" />¡Especie identificada!</span>
+      }
+    </div>
+
+    <section class="panel">
+      @switch (vista()) {
+        @case ('identificada') {
+          @let e = especie()!;
+          <div class="chips">
+            <span class="chip">{{ nombreGrupo(e.grupo) }}</span>
+            @if (conservacion()) { <span class="chip ambar">{{ conservacion() }}{{ e.categoria_nom059 ? ' · NOM-059' : '' }}</span> }
+            @if (o.estado === 'corregida') { <span class="chip gris">Corregida por un experto</span> }
+          </div>
+          <div class="nombres-fila">
+            <div class="nombres">
+              <h1>{{ e.nombre_comun }}</h1>
+              <em>{{ e.nombre_cientifico }}</em>
+            </div>
+            @if (e.imagen_url) {
+              <a [routerLink]="['/especie', e.id]" aria-label="Ver foto de referencia en la ficha">
+                <pvz-foto class="referencia" [src]="e.imagen_url" [alt]="'Foto de referencia de ' + e.nombre_comun" [icono]="iconoEspecie(e)" />
+              </a>
+            }
+          </div>
+          @if (o.estado !== 'corregida') {
+            <div class="confianza">
+              <div class="fila"><span>Confianza de la IA</span><strong>{{ porcentaje(o.ia_confianza) }} · {{ nivelConfianza(o.ia_confianza) }}</strong></div>
+              <div class="barra"><div [style.width.%]="(o.ia_confianza ?? 0) * 100"></div></div>
+            </div>
+          }
+          <dl class="datos">
+            @if (e.tamano) { <div><dt>Tamaño</dt><dd>{{ e.tamano }}</dd></div> }
+            @if (e.alimentacion) { <div><dt>Alimentación</dt><dd>{{ e.alimentacion }}</dd></div> }
+            @if (e.habitat) { <div class="ancho"><dt>Hábitat</dt><dd>{{ e.habitat }}</dd></div> }
+          </dl>
+          @if (o.ia_explicacion) {
+            <div class="explicacion"><h2>¿Por qué creemos que es esta especie?</h2><p>{{ o.ia_explicacion }}</p></div>
+          }
+          @if (e.protegida) {
+            <p class="nota"><ion-icon name="location-outline" />Al ser especie protegida, en lo público su ubicación se muestra aproximada.</p>
+          }
+        }
+
+        @case ('revisar') {
+          <span class="chip ambar">Confianza baja</span>
+          <h1>No estamos seguros de qué especie es</h1>
+          @if (o.ia_explicacion) { <p class="texto">{{ o.ia_explicacion }}</p> }
+          @if (candidatos().length) {
+            <p class="texto-suave sub">Estas son las especies más parecidas:</p>
+            <div class="candidatos">
+              @for (c of candidatos(); track c.cientifico) {
+                @if (c.especie; as ce) {
+                  <a [routerLink]="['/especie', ce.id]" class="candidato">
+                    <pvz-foto class="mini" [src]="ce.imagen_url" [icono]="iconoEspecie(ce)" />
+                    <div class="nombre-candidato"><strong>{{ ce.nombre_comun }}</strong><em>{{ ce.nombre_cientifico }}</em></div>
+                    <span class="chip" [class.ambar]="c.confianza < 0.5">{{ porcentaje(c.confianza) }}</span>
+                  </a>
+                } @else {
+                  <div class="candidato">
+                    <pvz-foto class="mini" />
+                    <div class="nombre-candidato"><strong>{{ c.comun || c.cientifico }}</strong><em>{{ c.cientifico }}</em></div>
+                    <span class="chip" [class.ambar]="c.confianza < 0.5">{{ porcentaje(c.confianza) }}</span>
+                  </div>
+                }
+              }
+            </div>
+          }
+          <p class="aviso">Guardamos tu foto como <strong>“En revisión”</strong>. Un experto de la app la confirmará y lo verás en tu historial.</p>
+        }
+
+        @case ('borrosa') {
+          <span class="chip rojo">Foto no válida</span>
+          <h1>La foto salió borrosa</h1>
+          <p class="texto">No se distinguen bien las formas ni los colores. Prueba otra vez con estos consejos:</p>
+          <ul class="consejos">
+            <li>Sostén el teléfono firme con las dos manos.</li>
+            <li>Busca más luz, sin el sol de frente.</li>
+            <li>Toca la pantalla sobre el animal o la planta para enfocar.</li>
+          </ul>
+          @if (o.ia_explicacion) { <p class="texto-suave sub">{{ o.ia_explicacion }}</p> }
+        }
+
+        @case ('sin_organismo') {
+          <span class="chip gris">Sin resultado</span>
+          <h1>No encontramos un animal o planta en la foto</h1>
+          <p class="texto">{{ o.ia_explicacion || 'Puede que se haya movido o que esté escondido.' }}</p>
+          <ul class="consejos">
+            <li>Acércate lo más que puedas sin molestarlo.</li>
+            <li>Deja al animal o la planta grande y al centro de la foto.</li>
+          </ul>
+        }
+
+      }
+
+      <p class="meta texto-suave">{{ fechaCorta(o.observada_en) }}@if (o.latitud !== null) { · con ubicación } @else { · sin ubicación }</p>
+
+      @if (vista() === 'identificada' || vista() === 'revisar') {
+        <label class="publica">
+          <span><strong>Observación pública</strong><small>Otras personas podrán verla en la ficha de la especie.</small></span>
+          <ion-toggle [checked]="o.es_publica" (ionChange)="cambiarPublica($event)" aria-label="Observación pública" />
+        </label>
+      }
+
+      <div class="botones">
+        <a class="boton secundario" routerLink="/app/identificar" [replaceUrl]="true">{{ vista() === 'identificada' ? 'Identificar otra' : 'Tomar otra foto' }}</a>
+        @if (vista() === 'identificada') { <a class="boton" [routerLink]="['/especie', especie()!.id]">Ver ficha completa</a> }
+      </div>
+      <button class="borrar" type="button" (click)="borrar()"><ion-icon name="trash-outline" />Borrar observación</button>
+    </section>
+  }
+</ion-content>

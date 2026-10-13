@@ -1,0 +1,47 @@
+<ion-content>
+  <ion-refresher slot="fixed" (ionRefresh)="cargar($event)"><ion-refresher-content /></ion-refresher>
+  <header>
+    <h1>Mis observaciones</h1>
+    <dl class="stats">
+      <div><dd>{{ stats().observaciones }}</dd><dt>Observaciones</dt></div>
+      <div class="medio"><dd>{{ stats().especies }}</dd><dt>Especies</dt></div>
+      <div><dd>{{ stats().protegidas }}</dd><dt>Protegidas</dt></div>
+    </dl>
+    @if (chips().length) {
+      <div class="filtros" role="group" aria-label="Filtrar por grupo">
+        <button type="button" [class.activo]="filtro() === 'todos'" (click)="filtro.set('todos')">Todos</button>
+        @for (c of chips(); track c.id) {
+          <button type="button" [class.activo]="filtro() === c.id" (click)="filtro.set(c.id)">{{ c.nombre }} · {{ c.total }}</button>
+        }
+      </div>
+    }
+  </header>
+
+  <div class="lista">
+    @if (cargando()) {
+      <div class="vacio"><ion-spinner name="crescent" /></div>
+    } @else if (error()) {
+      <div class="vacio">No pudimos cargar tu historial. Desliza hacia abajo para reintentar.</div>
+    } @else if (!secciones().length) {
+      <div class="vacio">
+        <p>Todavía no tienes observaciones.</p>
+        <a class="boton" routerLink="/app/identificar">Identificar mi primera especie</a>
+      </div>
+    }
+    @for (s of secciones(); track s.titulo) {
+      <h2>{{ s.titulo }}</h2>
+      @for (o of s.items; track o.id) {
+        <a class="item" [routerLink]="['/observacion', o.id]">
+          <pvz-foto class="mini" [src]="urls()[o.ruta_foto]" />
+          <div class="texto"><strong>{{ nombre(o) }}</strong><span>{{ fechaCorta(o.observada_en) }}</span></div>
+          @switch (o.estado) {
+            @case ('revisar') { <span class="chip ambar">En revisión</span> }
+            @case ('corregida') { <span class="chip">Corregida</span> }
+            @case ('no_identificada') { <span class="chip gris">Sin catálogo</span> }
+            @default { <span class="chip">{{ porcentaje(o.ia_confianza) }}</span> }
+          }
+        </a>
+      }
+    }
+  </div>
+</ion-content>

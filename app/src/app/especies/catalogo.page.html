@@ -1,0 +1,43 @@
+<ion-content>
+  <header>
+    <h1>Explorar especies</h1>
+    <p class="texto-suave">Especies identificadas en la app</p>
+    <label class="buscar">
+      <ion-icon name="search-outline" aria-hidden="true" />
+      <input type="search" placeholder="Buscar por nombre" aria-label="Buscar especie" [value]="busqueda()" (input)="buscar($event)" />
+    </label>
+    <div class="filtros" role="group" aria-label="Filtrar por grupo">
+      <button type="button" [class.activo]="grupo() === 'todos'" (click)="grupo.set('todos')">Todos</button>
+      @for (g of grupos; track g.id) {
+        <button type="button" [class.activo]="grupo() === g.id" (click)="grupo.set(g.id)">{{ g.nombre }}</button>
+      }
+    </div>
+    <label class="protegidas">
+      <span><ion-icon name="shield-checkmark-outline" />Solo especies protegidas</span>
+      <ion-toggle [checked]="soloProtegidas()" (ionChange)="soloProtegidas.set($event.detail.checked)" aria-label="Solo especies protegidas" />
+    </label>
+  </header>
+
+  <div class="lista">
+    @if (cargando()) {
+      <div class="vacio"><ion-spinner name="crescent" /></div>
+    } @else if (error()) {
+      <div class="vacio">No pudimos cargar el catálogo. Revisa tu conexión.</div>
+    } @else {
+      <p class="conteo texto-suave">{{ filtradas().length }} especies</p>
+      @for (e of filtradas(); track e.id) {
+        <a class="item" [routerLink]="['/especie', e.id]">
+          <pvz-foto class="miniatura" [src]="e.imagen_url" [icono]="iconoEspecie(e)" />
+          <div class="texto">
+            @if (etiqueta(e); as et) { <span [class]="clase(e)">{{ et }}</span> }
+            <strong>{{ e.nombre_comun }}</strong>
+            <em>{{ e.nombre_cientifico }}</em>
+          </div>
+          <ion-icon name="chevron-forward" class="flecha" aria-hidden="true" />
+        </a>
+      } @empty {
+        <div class="vacio">No hay especies con esos filtros.</div>
+      }
+    }
+  </div>
+</ion-content>

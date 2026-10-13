@@ -1,0 +1,61 @@
+<ion-content>
+  @if (cargando() && !especie()) {
+    <div class="vacio"><ion-spinner name="crescent" /></div>
+  } @else if (!especie()) {
+    <div class="vacio"><p>No encontramos esta especie.</p><a class="boton" routerLink="/app/explorar">Ir al catálogo</a></div>
+  } @else {
+    @let e = especie()!;
+    <div class="hero" [class.sin-foto]="!portada()">
+      @if (portada()) { <pvz-foto class="portada" [src]="portada()" [alt]="'Foto de ' + e.nombre_comun" [icono]="iconoEspecie(e)" [diferida]="false" /> }
+      <div class="degradado"></div>
+      <button class="volver" type="button" aria-label="Volver" (click)="volver()"><ion-icon name="arrow-back" /></button>
+      <div class="titulo">
+        <div class="chips">
+          <span class="chip claro">{{ nombreGrupo(e.grupo) }}{{ e.familia ? ' · ' + e.familia : '' }}</span>
+          @if (conservacion()) { <span class="chip ambar-fuerte">{{ conservacion() }}</span> }
+        </div>
+        <h1>{{ e.nombre_comun }}</h1>
+        <em>{{ e.nombre_cientifico }}</em>
+      </div>
+    </div>
+
+    @if (creditoFoto(); as c) {
+      <p class="credito"><a [href]="c" target="_blank" rel="noopener">Foto de referencia: Wikimedia Commons</a></p>
+    }
+    <div class="cuerpo">
+      @if (e.descripcion) {
+        <section><h2>Descripción</h2><p>{{ e.descripcion }}</p></section>
+      }
+      @if (e.habitat || e.alimentacion || e.tamano) {
+        <section class="tabla">
+          @if (e.tamano) { <div><span>Tamaño</span><strong>{{ e.tamano }}</strong></div> }
+          @if (e.alimentacion) { <div><span>Alimentación</span><strong>{{ e.alimentacion }}</strong></div> }
+          @if (e.habitat) { <div><span>Hábitat</span><strong>{{ e.habitat }}</strong></div> }
+        </section>
+      }
+      @if (!e.verificada) {
+        <p class="nota-ia">Ficha generada por la IA a partir de las fotos de la comunidad; puede tener errores.</p>
+      }
+      @if (textoNom()) {
+        <section class="conservacion">
+          <h2><ion-icon name="shield-checkmark-outline" />Estado de conservación</h2>
+          <p>{{ textoNom() }} En la app, su ubicación se muestra aproximada para protegerla.</p>
+        </section>
+      } @else if (e.introducida) {
+        <section class="conservacion gris"><h2>Especie introducida</h2><p>No es originaria de México; llegó por actividad humana.</p></section>
+      }
+      <section>
+        <h2>Avistamientos recientes</h2>
+        @for (a of avistamientos(); track a.id) {
+          <div class="avistamiento">
+            <pvz-foto class="mini" [src]="urls()[a.ruta_foto]" />
+            <div><strong>{{ a.nombre_usuario || 'Anónimo' }}</strong><span>{{ fechaCorta(a.observada_en) }}{{ e.protegida ? ' · ubicación aproximada' : '' }}</span></div>
+          </div>
+        } @empty {
+          <p class="texto-suave">Nadie la ha registrado todavía. ¡Puedes ser el primero!</p>
+        }
+      </section>
+      <a class="boton" routerLink="/app/identificar"><ion-icon name="tab-identificar" />Identificar otra especie</a>
+    </div>
+  }
+</ion-content>

@@ -1,0 +1,21 @@
+header { padding: calc(26px + env(safe-area-inset-top)) 18px 8px; display: flex; flex-direction: column; gap: 12px; }
+h1 { margin: 0; font-size: 26px; }
+header > p { margin: -8px 0 0; font-size: 14px; }
+.buscar { display: flex; align-items: center; gap: 8px; background: #fff; border-radius: 14px; padding: 0 14px; height: 48px; border: 1.5px solid var(--pvz-borde); }
+.buscar ion-icon { font-size: 20px; color: var(--pvz-texto-suave); }
+.buscar input { flex: 1; border: 0; background: transparent; font: inherit; font-size: 15px; color: var(--pvz-texto); outline: none; }
+.filtros { display: flex; gap: 8px; overflow-x: auto; margin-right: -18px; padding-right: 18px; }
+.filtros button { flex: none; height: 36px; padding: 0 14px; border-radius: 18px; border: 1.5px solid var(--pvz-borde-fuerte); background: #fff; color: var(--pvz-texto); font: inherit; font-size: 13px; font-weight: 700; }
+.filtros button.activo { background: var(--pvz-texto); color: #fff; border-color: var(--pvz-texto); font-weight: 800; }
+.protegidas { display: flex; justify-content: space-between; align-items: center; background: #fff; border-radius: 14px; padding: 6px 14px; font-size: 14px; font-weight: 700; }
+.protegidas span { display: flex; align-items: center; gap: 8px; }
+.protegidas ion-icon { font-size: 20px; color: var(--pvz-verde); }
+.lista { padding: 0 18px 24px; display: flex; flex-direction: column; gap: 8px; }
+.conteo { margin: 4px 0 0; font-size: 13px; font-weight: 700; }
+.item { background: #fff; border-radius: 16px; padding: 12px; display: flex; gap: 12px; align-items: center; text-decoration: none; color: var(--pvz-texto); }
+.miniatura { width: 64px; height: 64px; border-radius: 14px; }
+.texto { flex: 1; min-width: 0; display: flex; flex-direction: column; align-items: flex-start; gap: 2px; }
+.texto .chip { font-size: 11px; padding: 3px 8px; margin-bottom: 2px; }
+.texto strong { font-size: 15px; }
+.texto em { font-size: 13px; color: var(--pvz-texto-suave); }
+.flecha { color: var(--pvz-texto-suave); flex: none; }

@@ -1,0 +1,62 @@
+<ion-content>
+  <ion-refresher slot="fixed" (ionRefresh)="cargar($event)"><ion-refresher-content /></ion-refresher>
+
+  <header class="cabecera">
+    <div class="fila">
+      <div class="hola">
+        <span>{{ saludo }}</span>
+        <h1>Hola{{ nombre() ? ', ' + nombre() : '' }}</h1>
+      </div>
+      <a class="avatar" routerLink="/app/perfil" aria-label="Perfil">{{ inicial() }}</a>
+    </div>
+    <div class="cupo">
+      <div class="fila texto"><span>Identificaciones de hoy</span>
+        <strong>@if (restantes() !== null) { Te quedan {{ restantes() }} de {{ limite }} }</strong>
+      </div>
+      <div class="barra" role="progressbar" [attr.aria-valuenow]="usadoPct()" aria-valuemin="0" aria-valuemax="100">
+        <div [style.width.%]="usadoPct()"></div>
+      </div>
+    </div>
+  </header>
+
+  <section class="acciones">
+    <h2>¿Qué encontraste?</h2>
+    <div class="botones">
+      <button class="principal" type="button" (click)="elegir('camara')" [disabled]="procesando()">
+        <ion-icon name="tab-identificar" aria-hidden="true" />Tomar foto
+      </button>
+      <button class="secundario" type="button" (click)="elegir('galeria')" [disabled]="procesando()">
+        <ion-icon name="image-outline" aria-hidden="true" />Subir imagen
+      </button>
+    </div>
+  </section>
+
+  <section class="seccion">
+    <h2 class="titulo-seccion">Explora por grupo</h2>
+    <div class="grupos">
+      @for (g of grupos; track g.id) {
+        <a [routerLink]="['/app/explorar']" [queryParams]="{ grupo: g.id }"><ion-icon [name]="g.icono" aria-hidden="true" />{{ g.nombre }}</a>
+      }
+    </div>
+  </section>
+
+  <section class="seccion">
+    <div class="fila">
+      <h2 class="titulo-seccion">Tus últimas identificaciones</h2>
+      @if (recientes().length) { <a class="ver" routerLink="/app/historial">Ver todas</a> }
+    </div>
+    @if (recientes().length) {
+      <div class="recientes">
+        @for (o of recientes(); track o.id) {
+          <a class="reciente" [routerLink]="['/observacion', o.id]">
+            <pvz-foto class="mini" [src]="urls()[o.ruta_foto]" [alt]="nombreDe(o)" />
+            <span class="nombre">{{ nombreDe(o) }}</span>
+            <span class="fecha">{{ fechaCorta(o.creado_en) }}</span>
+          </a>
+        }
+      </div>
+    } @else {
+      <p class="texto-suave vacio-corto">Aún no tienes identificaciones. Toma tu primera foto.</p>
+    }
+  </section>
+</ion-content>

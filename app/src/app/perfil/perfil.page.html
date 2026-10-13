@@ -1,0 +1,28 @@
+<ion-content>
+  <header>
+    <div class="avatar">{{ (sb.perfil()?.nombre_usuario || email() || '?').charAt(0).toUpperCase() }}</div>
+    @if (editando()) {
+      <form class="editar" (ngSubmit)="guardar()">
+        <input name="username" aria-label="Nombre de usuario" [(ngModel)]="username" maxlength="30" />
+        <button class="boton" type="submit">Guardar</button>
+      </form>
+    } @else {
+      <h1>{{ sb.perfil()?.nombre_usuario || 'Sin nombre de usuario' }}</h1>
+      <button class="enlace" type="button" (click)="editar()">Cambiar nombre de usuario</button>
+    }
+    <p class="texto-suave">{{ email() }}</p>
+    @if (sb.esAdmin()) { <span class="chip ambar">Administrador</span> }
+  </header>
+  <div class="cuerpo">
+    <div class="tarjeta fila">
+      <span>Identificaciones disponibles hoy</span>
+      <strong>{{ restantes() ?? '–' }} de {{ limite }}</strong>
+    </div>
+    <div class="tarjeta info">
+      <h2>Sobre la app</h2>
+      <p>Plantas vs Zombies identifica animales y plantas con inteligencia artificial (Google Gemini). Las fotos se guardan de forma privada y sin datos de ubicación del archivo.</p>
+      <p>Las especies protegidas por la NOM-059-SEMARNAT se muestran con ubicación aproximada.</p>
+    </div>
+    <button class="boton secundario" type="button" (click)="salir()"><ion-icon name="log-out-outline" />Cerrar sesión</button>
+  </div>
+</ion-content>

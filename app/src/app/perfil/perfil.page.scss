@@ -1,0 +1,13 @@
+header { padding: calc(40px + env(safe-area-inset-top)) 22px 20px; display: flex; flex-direction: column; align-items: center; gap: 6px; text-align: center; }
+.avatar { width: 84px; height: 84px; border-radius: 42px; background: var(--pvz-verde); color: #fff; font-size: 34px; font-weight: 800; display: flex; align-items: center; justify-content: center; margin-bottom: 8px; }
+h1 { margin: 0; font-size: 24px; }
+header p { margin: 0; font-size: 14px; }
+.enlace { border: 0; background: transparent; color: var(--pvz-verde); font: inherit; font-weight: 700; font-size: 14px; padding: 6px; }
+.editar { display: flex; gap: 8px; width: 100%; }
+.editar input { flex: 1; height: 48px; border-radius: 14px; border: 1.5px solid var(--pvz-borde-fuerte); padding: 0 12px; font: inherit; font-size: 16px; }
+.editar .boton { width: auto; height: 48px; padding: 0 16px; }
+.cuerpo { padding: 0 18px 28px; display: flex; flex-direction: column; gap: 12px; }
+.fila { display: flex; justify-content: space-between; align-items: center; gap: 12px; font-size: 14px; font-weight: 700; }
+.fila strong { color: var(--pvz-verde); font-size: 16px; }
+.info h2 { margin: 0 0 6px; font-size: 16px; }
+.info p { margin: 0 0 8px; font-size: 14px; line-height: 1.5; color: #3a4a42; }
