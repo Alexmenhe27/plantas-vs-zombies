@@ -9,7 +9,7 @@
   } @else {
     @let o = obs()!;
     <div class="hero" [class.corto]="vista() !== 'identificada'">
-      <pvz-foto class="foto" [src]="url()" alt="Tu foto" [diferida]="false" />
+      <app-foto class="foto" [src]="url()" alt="Tu foto" [diferida]="false" />
       <div class="barra-sup">
         <button type="button" aria-label="Volver" (click)="volver()"><ion-icon name="arrow-back" /></button>
       </div>
@@ -34,7 +34,7 @@
             </div>
             @if (e.imagen_url) {
               <a [routerLink]="['/especie', e.id]" aria-label="Ver foto de referencia en la ficha">
-                <pvz-foto class="referencia" [src]="e.imagen_url" [alt]="'Foto de referencia de ' + e.nombre_comun" [icono]="iconoEspecie(e)" />
+                <app-foto class="referencia" [src]="e.imagen_url" [alt]="'Foto de referencia de ' + e.nombre_comun" [icono]="iconoEspecie(e)" />
               </a>
             }
           </div>
@@ -67,13 +67,13 @@
               @for (c of candidatos(); track c.cientifico) {
                 @if (c.especie; as ce) {
                   <a [routerLink]="['/especie', ce.id]" class="candidato">
-                    <pvz-foto class="mini" [src]="ce.imagen_url" [icono]="iconoEspecie(ce)" />
+                    <app-foto class="mini" [src]="ce.imagen_url" [icono]="iconoEspecie(ce)" />
                     <div class="nombre-candidato"><strong>{{ ce.nombre_comun }}</strong><em>{{ ce.nombre_cientifico }}</em></div>
                     <span class="chip" [class.ambar]="c.confianza < 0.5">{{ porcentaje(c.confianza) }}</span>
                   </a>
                 } @else {
                   <div class="candidato">
-                    <pvz-foto class="mini" />
+                    <app-foto class="mini" />
                     <div class="nombre-candidato"><strong>{{ c.comun || c.cientifico }}</strong><em>{{ c.cientifico }}</em></div>
                     <span class="chip" [class.ambar]="c.confianza < 0.5">{{ porcentaje(c.confianza) }}</span>
                   </div>

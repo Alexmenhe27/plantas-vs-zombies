@@ -9,25 +9,25 @@
 
 /* Versión 1 "Moderno y profesional": verde bosque + ámbar, Manrope, tarjetas redondeadas */
 :root {
-  --pvz-verde: #0e4d3a;
-  --pvz-verde-oscuro: #08372a;
-  --pvz-verde-medio: #2c6e57;
-  --pvz-verde-claro: #ddf0e4;
-  --pvz-verde-texto: #135c3f;
-  --pvz-ambar: #f2b544;
-  --pvz-ambar-claro: #fcebcb;
-  --pvz-ambar-texto: #8a4b06;
-  --pvz-fondo: #f3f5f1;
-  --pvz-texto: #15201b;
-  --pvz-texto-suave: #55655d;
-  --pvz-borde: #e2e8e3;
-  --pvz-borde-fuerte: #cbd8d0;
-  --pvz-rojo-claro: #fbe1dc;
-  --pvz-rojo-texto: #9b2c1a;
+  --app-verde: #0e4d3a;
+  --app-verde-oscuro: #08372a;
+  --app-verde-medio: #2c6e57;
+  --app-verde-claro: #ddf0e4;
+  --app-verde-texto: #135c3f;
+  --app-ambar: #f2b544;
+  --app-ambar-claro: #fcebcb;
+  --app-ambar-texto: #8a4b06;
+  --app-fondo: #f3f5f1;
+  --app-texto: #15201b;
+  --app-texto-suave: #55655d;
+  --app-borde: #e2e8e3;
+  --app-borde-fuerte: #cbd8d0;
+  --app-rojo-claro: #fbe1dc;
+  --app-rojo-texto: #9b2c1a;
 
   --ion-font-family: 'Manrope', system-ui, sans-serif;
-  --ion-background-color: var(--pvz-fondo);
-  --ion-text-color: var(--pvz-texto);
+  --ion-background-color: var(--app-fondo);
+  --ion-text-color: var(--app-texto);
   --ion-color-primary: #0e4d3a;
   --ion-color-primary-rgb: 14, 77, 58;
   --ion-color-primary-contrast: #ffffff;
@@ -40,14 +40,14 @@
   --ion-color-secondary-contrast-rgb: 61, 36, 2;
   --ion-color-secondary-shade: #d59f3c;
   --ion-color-secondary-tint: #f3bc57;
-  --ion-toolbar-background: var(--pvz-fondo);
+  --ion-toolbar-background: var(--app-fondo);
   --ion-tab-bar-background: #ffffff;
-  --ion-tab-bar-color: var(--pvz-texto-suave);
-  --ion-tab-bar-color-selected: var(--pvz-verde);
+  --ion-tab-bar-color: var(--app-texto-suave);
+  --ion-tab-bar-color-selected: var(--app-verde);
   --ion-item-background: #ffffff;
 }
 
-body { color: var(--pvz-texto); }
+body { color: var(--app-texto); }
 h1, h2, h3 { font-weight: 800; letter-spacing: -0.2px; }
 
 /* Piezas compartidas */
@@ -55,22 +55,22 @@ h1, h2, h3 { font-weight: 800; letter-spacing: -0.2px; }
 .chip {
   display: inline-flex; align-items: center; gap: 4px;
   font-size: 12px; font-weight: 800; padding: 5px 10px; border-radius: 999px;
-  background: var(--pvz-verde-claro); color: var(--pvz-verde-texto);
+  background: var(--app-verde-claro); color: var(--app-verde-texto);
 }
-.chip.ambar { background: var(--pvz-ambar-claro); color: var(--pvz-ambar-texto); }
-.chip.rojo { background: var(--pvz-rojo-claro); color: var(--pvz-rojo-texto); }
+.chip.ambar { background: var(--app-ambar-claro); color: var(--app-ambar-texto); }
+.chip.rojo { background: var(--app-rojo-claro); color: var(--app-rojo-texto); }
 .chip.gris { background: #e7ece8; color: #3a4a42; }
 .boton {
   display: flex; align-items: center; justify-content: center; gap: 8px;
   height: 52px; width: 100%; border-radius: 16px; border: 0;
-  background: var(--pvz-verde); color: #fff; font-family: inherit; font-size: 15px; font-weight: 700;
+  background: var(--app-verde); color: #fff; font-family: inherit; font-size: 15px; font-weight: 700;
   cursor: pointer;
 }
 .boton:disabled { opacity: 0.6; }
-.boton.secundario { background: #fff; color: var(--pvz-verde); border: 1.5px solid var(--pvz-borde-fuerte); }
-.texto-suave { color: var(--pvz-texto-suave); }
+.boton.secundario { background: #fff; color: var(--app-verde); border: 1.5px solid var(--app-borde-fuerte); }
+.texto-suave { color: var(--app-texto-suave); }
 .titulo-seccion { margin: 0; font-size: 16px; font-weight: 800; }
-.vacio { text-align: center; padding: 40px 24px; color: var(--pvz-texto-suave); }
+.vacio { text-align: center; padding: 40px 24px; color: var(--app-texto-suave); }
 
 /* En pantallas anchas (computadora) la app se muestra como columna de teléfono:
    así las fotos conservan las proporciones del diseño en vez de estirarse a todo el ancho. */

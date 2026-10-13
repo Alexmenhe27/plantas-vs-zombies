@@ -11,7 +11,7 @@ import { ESTILOS_ACCESO } from './auth.styles';
   template: `
     <ion-content>
       <header class="cabecera">
-        <div class="marca"><ion-icon name="leaf-outline" />Plantas vs Zombies</div>
+        <div class="marca"><ion-icon name="leaf-outline" /></div>
         <h1>Descubre la vida silvestre que te rodea</h1>
         <p>Inicia sesión para identificar especies y guardar tus observaciones.</p>
       </header>

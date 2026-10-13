@@ -15,11 +15,11 @@ import { IonIcon, IonLabel, IonTabBar, IonTabButton, IonTabs } from '@ionic/angu
     </ion-tabs>
   `,
   styles: `
-    ion-tab-bar { border-top: 1px solid var(--pvz-borde); height: 72px; padding-bottom: env(safe-area-inset-bottom); }
+    ion-tab-bar { border-top: 1px solid var(--app-borde); height: 72px; padding-bottom: env(safe-area-inset-bottom); }
     ion-tab-button { font-weight: 600; --ripple-color: transparent; }
     ion-tab-button ion-icon { width: 56px; height: 30px; padding: 4px 0; border-radius: 15px; font-size: 22px; }
     ion-tab-button.tab-selected { font-weight: 800; }
-    ion-tab-button.tab-selected ion-icon { background: var(--pvz-verde-claro); }
+    ion-tab-button.tab-selected ion-icon { background: var(--app-verde-claro); }
     ion-label { font-size: 12px; margin-top: 4px; }
   `,
   changeDetection: ChangeDetectionStrategy.OnPush,

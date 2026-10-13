@@ -1,4 +1,4 @@
-# Plantas vs Zombies
+# Identificador de fauna y flora
 
 App móvil para identificar fauna y flora con IA (Google Gemini, plan gratuito). Empezó con un catálogo de 95 especies de Puebla y crece sola con cada especie nueva que se fotografía.
 
@@ -27,7 +27,7 @@ App móvil para identificar fauna y flora con IA (Google Gemini, plan gratuito).
 Guía paso a paso para tu computadora: [COMO_EJECUTAR.md](COMO_EJECUTAR.md).
 
 ### 1. Supabase
-Ya existe: proyecto **plantas-vs-zombies** (`https://boppdniulsvoyevhoerp.supabase.co`), con las tres migraciones,
+Ya existe: tu proyecto (`https://boppdniulsvoyevhoerp.supabase.co`), con las tres migraciones,
 el catálogo (95 especies) y sus fotos de referencia aplicados el 2026-10-12. La URL y la clave pública ya están en `app/src/environments/`.
 
 Tablas (todo en español): `perfiles`, `especies`, `observaciones` y la vista `observaciones_publicas`.

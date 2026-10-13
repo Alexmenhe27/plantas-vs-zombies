@@ -1,4 +1,4 @@
--- Plantas vs Zombies · Esquema inicial
+-- Esquema inicial
 -- Tres tablas: profiles, species, observations. RLS en todas.
 -- Bucket privado "fotos" con una carpeta por usuario.
 

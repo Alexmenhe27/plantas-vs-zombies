@@ -14,7 +14,7 @@ from . import fotos_especies, ia
 from .config import settings
 from .supabase_client import Supabase, SupabaseError
 
-log = logging.getLogger("pvz")
+log = logging.getLogger("api")
 if not logging.getLogger().handlers:
     logging.basicConfig(level=logging.INFO, format="%(levelname)s:     %(message)s")
 
@@ -26,7 +26,7 @@ async def lifespan(app: FastAPI):
         yield
 
 
-app = FastAPI(title="Plantas vs Zombies · API de identificación", version="0.1.0", lifespan=lifespan)
+app = FastAPI(title="API de identificación de especies", version="0.1.0", lifespan=lifespan)
 
 
 @app.middleware("http")

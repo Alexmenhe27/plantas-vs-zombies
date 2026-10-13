@@ -6,4 +6,4 @@ __pycache__/
 .pytest_cache/
 .env
 api/.env
-pruebas/e2e/capturas/*.json
+pruebas/e2e/capturas/

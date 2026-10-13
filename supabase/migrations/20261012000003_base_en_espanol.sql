@@ -1,4 +1,4 @@
--- Plantas vs Zombies · Base de datos en español
+-- Base de datos en español
 -- Renombra tablas, columnas, vista, funciones, índices y restricciones al español.
 -- NO borra datos ni objetos: todo se hace con "rename", y los pocos valores que cambian se convierten en el mismo paso.
 --   profiles      -> perfiles

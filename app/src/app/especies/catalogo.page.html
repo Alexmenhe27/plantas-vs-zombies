@@ -27,7 +27,7 @@
       <p class="conteo texto-suave">{{ filtradas().length }} especies</p>
       @for (e of filtradas(); track e.id) {
         <a class="item" [routerLink]="['/especie', e.id]">
-          <pvz-foto class="miniatura" [src]="e.imagen_url" [icono]="iconoEspecie(e)" />
+          <app-foto class="miniatura" [src]="e.imagen_url" [icono]="iconoEspecie(e)" />
           <div class="texto">
             @if (etiqueta(e); as et) { <span [class]="clase(e)">{{ et }}</span> }
             <strong>{{ e.nombre_comun }}</strong>

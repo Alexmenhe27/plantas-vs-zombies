@@ -8,8 +8,8 @@ from urllib.parse import quote
 
 import httpx
 
-log = logging.getLogger("pvz")
-CABECERAS = {"User-Agent": "PlantasVsZombies/1.0 (app educativa de identificacion de especies)"}
+log = logging.getLogger("api")
+CABECERAS = {"User-Agent": "IdentificaEspecies/1.0 (app educativa de identificacion de especies)"}
 
 
 def _mas_grande(url: str, ancho_original: int | None) -> str:

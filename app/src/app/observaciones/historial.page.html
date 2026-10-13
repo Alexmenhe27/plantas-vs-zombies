@@ -32,7 +32,7 @@
       <h2>{{ s.titulo }}</h2>
       @for (o of s.items; track o.id) {
         <a class="item" [routerLink]="['/observacion', o.id]">
-          <pvz-foto class="mini" [src]="urls()[o.ruta_foto]" />
+          <app-foto class="mini" [src]="urls()[o.ruta_foto]" />
           <div class="texto"><strong>{{ nombre(o) }}</strong><span>{{ fechaCorta(o.observada_en) }}</span></div>
           @switch (o.estado) {
             @case ('revisar') { <span class="chip ambar">En revisión</span> }

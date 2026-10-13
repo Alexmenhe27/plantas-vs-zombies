@@ -15,7 +15,7 @@ from pydantic import BaseModel, Field
 
 from .config import settings
 
-log = logging.getLogger("pvz")
+log = logging.getLogger("api")
 
 TIPOS_IMAGEN = {"image/jpeg", "image/png", "image/webp", "image/gif"}
 GRUPOS_ANIMAL = ["ave", "mamifero", "reptil", "anfibio", "pez", "insecto", "invertebrado"]

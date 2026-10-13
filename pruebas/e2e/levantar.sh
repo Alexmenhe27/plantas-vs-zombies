@@ -6,15 +6,15 @@ set -euo pipefail
 AQUI="$(cd "$(dirname "$0")" && pwd)"
 RAIZ="$(cd "$AQUI/../.." && pwd)"
 PY="${E2E_PY:-python}"
-LOGS="${E2E_LOGS:-/tmp/pvz-e2e}"
+LOGS="${E2E_LOGS:-/tmp/app-e2e}"
 mkdir -p "$LOGS"
 
 P="psql -h /tmp -p 54329 -U postgres -v ON_ERROR_STOP=1 -q"
-$P -c "drop database if exists pvz" -c "create database pvz"
-$P -d pvz -f "$RAIZ/supabase/tests/00_stub_supabase.sql"
-for m in "$RAIZ"/supabase/migrations/*.sql; do $P -d pvz -f "$m"; done
-$P -d pvz -f "$RAIZ/supabase/seed.sql"
-$P -d pvz -f "$RAIZ/supabase/seed_imagenes.sql"
+$P -c "drop database if exists app_e2e" -c "create database app_e2e"
+$P -d app_e2e -f "$RAIZ/supabase/tests/00_stub_supabase.sql"
+for m in "$RAIZ"/supabase/migrations/*.sql; do $P -d app_e2e -f "$m"; done
+$P -d app_e2e -f "$RAIZ/supabase/seed.sql"
+$P -d app_e2e -f "$RAIZ/supabase/seed_imagenes.sql"
 
 SERVICE_KEY=$($PY "$AQUI/mini_supabase.py" | grep SERVICE_KEY | cut -d= -f2)
 

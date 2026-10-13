@@ -6,7 +6,7 @@
   } @else {
     @let e = especie()!;
     <div class="hero" [class.sin-foto]="!portada()">
-      @if (portada()) { <pvz-foto class="portada" [src]="portada()" [alt]="'Foto de ' + e.nombre_comun" [icono]="iconoEspecie(e)" [diferida]="false" /> }
+      @if (portada()) { <app-foto class="portada" [src]="portada()" [alt]="'Foto de ' + e.nombre_comun" [icono]="iconoEspecie(e)" [diferida]="false" /> }
       <div class="degradado"></div>
       <button class="volver" type="button" aria-label="Volver" (click)="volver()"><ion-icon name="arrow-back" /></button>
       <div class="titulo">
@@ -48,7 +48,7 @@
         <h2>Avistamientos recientes</h2>
         @for (a of avistamientos(); track a.id) {
           <div class="avistamiento">
-            <pvz-foto class="mini" [src]="urls()[a.ruta_foto]" />
+            <app-foto class="mini" [src]="urls()[a.ruta_foto]" />
             <div><strong>{{ a.nombre_usuario || 'Anónimo' }}</strong><span>{{ fechaCorta(a.observada_en) }}{{ e.protegida ? ' · ubicación aproximada' : '' }}</span></div>
           </div>
         } @empty {

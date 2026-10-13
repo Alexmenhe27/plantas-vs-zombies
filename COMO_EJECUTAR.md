@@ -1,4 +1,4 @@
-# Cómo ejecutar Plantas vs Zombies en tu computadora
+# Cómo ejecutar la app en tu computadora
 
 ¿Ya lo tenías funcionando y descargaste una versión nueva? Ve a [Actualizar a una versión nueva](#actualizar-a-una-versión-nueva).
 
@@ -22,13 +22,13 @@ python --version   # en Mac/Linux puede ser: python3 --version
 
 ## 2. Descomprime el proyecto
 
-Descomprime `plantas-vs-zombies-etapa1.zip` en una carpeta, por ejemplo `Documentos/plantas-vs-zombies`.
+Descarga o clona el proyecto en una carpeta, por ejemplo `Documentos/fauna-y-flora`.
 Adentro verás `app/`, `api/`, `supabase/`, `pruebas/` y `README.md`.
 
 ## 3. Consigue tus dos claves secretas
 
 **a) Clave secreta de Supabase**
-1. Entra a https://supabase.com/dashboard y abre el proyecto **plantas-vs-zombies**.
+1. Entra a https://supabase.com/dashboard y abre tu proyecto (el de la URL `boppdniulsvoyevhoerp`).
 2. Ve a **Project Settings → API Keys**.
 3. Copia la clave **secret** (empieza con `sb_secret_…`). Si solo ves la pestaña *Legacy*, copia la **service_role**.
 
@@ -65,7 +65,7 @@ Sirve para que el correo de confirmación y el de "olvidé mi contraseña" regre
 
 **Windows (PowerShell):**
 ```powershell
-cd ruta\a\plantas-vs-zombies\api
+cd ruta\a\fauna-y-flora\api
 python -m venv .venv
 .venv\Scripts\Activate.ps1
 pip install -r requirements.txt
@@ -76,7 +76,7 @@ Si PowerShell no deja activar el entorno, ejecuta una vez:
 
 **Mac / Linux:**
 ```bash
-cd ruta/a/plantas-vs-zombies/api
+cd ruta/a/fauna-y-flora/api
 python3 -m venv .venv
 source .venv/bin/activate
 pip install -r requirements.txt
@@ -101,7 +101,7 @@ crea un usuario temporal, sube la foto, llama a la API, comprueba que se guardó
 ## 7. Arranca la app (terminal 2)
 
 ```bash
-cd ruta/a/plantas-vs-zombies/app
+cd ruta/a/fauna-y-flora/app
 npm install
 npm start
 ```

@@ -11,7 +11,7 @@ import { ESTILOS_ACCESO } from './auth.styles';
   template: `
     <ion-content>
       <header class="cabecera">
-        <div class="marca"><ion-icon name="leaf-outline" />Plantas vs Zombies</div>
+        <div class="marca"><ion-icon name="leaf-outline" /></div>
         <h1>Recupera tu contraseña</h1>
         <p>Te enviaremos un enlace para crear una nueva.</p>
       </header>

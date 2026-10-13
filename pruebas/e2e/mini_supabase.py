@@ -24,7 +24,7 @@ from fastapi import FastAPI, Request, Response
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 
-DB = os.environ.get("E2E_DB", "host=/tmp port=54329 dbname=pvz user=postgres")
+DB = os.environ.get("E2E_DB", "host=/tmp port=54329 dbname=app_e2e user=postgres")
 POSTGREST = os.environ.get("E2E_POSTGREST", "http://127.0.0.1:3001")
 SECRET = os.environ.get("E2E_JWT_SECRET", "secreto-de-pruebas-locales-de-32-caracteres-o-mas")
 ARCHIVOS = Path(os.environ.get("E2E_ARCHIVOS", "/tmp/claude-0/e2e-storage"))

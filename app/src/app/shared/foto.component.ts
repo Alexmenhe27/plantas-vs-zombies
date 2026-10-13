@@ -4,10 +4,10 @@ import { IonIcon } from '@ionic/angular';
 /**
  * Muestra una imagen dentro de una caja de tamaño fijo, recortada sin deformarse (object-fit: cover).
  * Mientras carga, o si no hay imagen o el enlace falla, muestra un icono en su lugar.
- * El tamaño lo decide quien lo usa (ancho/alto o aspect-ratio sobre la etiqueta <pvz-foto>).
+ * El tamaño lo decide quien lo usa (ancho/alto o aspect-ratio sobre la etiqueta <app-foto>).
  */
 @Component({
-  selector: 'pvz-foto',
+  selector: 'app-foto',
   imports: [IonIcon],
   template: `
     @if (src() && !fallo()) {
@@ -19,11 +19,11 @@ import { IonIcon } from '@ionic/angular';
     }
   `,
   styles: `
-    :host { display: block; position: relative; overflow: hidden; background: var(--pvz-verde-claro); flex: none; }
+    :host { display: block; position: relative; overflow: hidden; background: var(--app-verde-claro); flex: none; }
     img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; display: block; opacity: 0; transition: opacity .2s; }
     img.lista { opacity: 1; }
     .respaldo { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; }
-    ion-icon { font-size: var(--pvz-foto-icono, 26px); color: var(--pvz-verde); opacity: .75; }
+    ion-icon { font-size: var(--app-foto-icono, 26px); color: var(--app-verde); opacity: .75; }
   `,
   changeDetection: ChangeDetectionStrategy.OnPush,
 })

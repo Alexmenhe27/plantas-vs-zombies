@@ -125,7 +125,7 @@ También se renombraron índices, restricciones y disparadores. La app, la API, 
 
 ## 4. Tamaño y proporciones de las imágenes
 
-- Componente nuevo `pvz-foto` (`app/src/app/shared/foto.component.ts`), usado por todas las imágenes de la app. Tiene una caja de tamaño fijo y recorta
+- Componente nuevo `app-foto` (`app/src/app/shared/foto.component.ts`), usado por todas las imágenes de la app. Tiene una caja de tamaño fijo y recorta
   la foto sin deformarla (`object-fit: cover`). Muestra un fondo con icono mientras carga y una transición suave al aparecer.
 - Tamaños: catálogo 64×64, historial 56×56, inicio 132×92, ficha cuadrada (máx. 440 px de alto), resultado 320 px de alto.
 - En la computadora la app se muestra como una columna de teléfono de 480 px. Antes las fotos se estiraban a todo el ancho de la pantalla y quedaban muy recortadas.

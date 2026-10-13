@@ -1,8 +1,8 @@
 import type { CapacitorConfig } from '@capacitor/cli';
 
 const config: CapacitorConfig = {
-  appId: 'mx.puebla.plantasvszombies',
-  appName: 'Plantas vs Zombies',
+  appId: 'mx.faunayflora.app',
+  appName: 'Fauna y Flora',
   webDir: 'dist/app/browser',
 };
 

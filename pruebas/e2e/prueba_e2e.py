@@ -188,9 +188,9 @@ def main() -> int:
         expect(pag_ficha.get_by_text(USUARIO)).to_be_visible()
         captura(page, "04-ficha")
         paso("Ficha muestra avistamiento público", True)
-        expect(pag_ficha.locator("pvz-foto.portada img.lista")).to_be_visible()
+        expect(pag_ficha.locator("app-foto.portada img.lista")).to_be_visible()
         expect(pag_ficha.get_by_role("link", name="Foto de referencia: Wikimedia Commons")).to_have_attribute("href", "https://commons.wikimedia.org/wiki/File:Ara_militaris_-London_Zoo-8a.jpg")
-        c = caja_foto(page, "app-ficha pvz-foto.portada")
+        c = caja_foto(page, "app-ficha app-foto.portada")
         paso("Ficha muestra la foto de referencia sin deformarla, con crédito",
              c["ajuste"] == "cover" and c["ancho"] == c["img_ancho"] == 390 and c["alto"] == c["img_alto"] == 390 and c["natural"] == "600x900", f"({c})")
 
@@ -207,11 +207,11 @@ def main() -> int:
         captura(page, "05-baja-confianza")
         paso("Baja confianza queda en revisión", True)
         cand = res.locator(".candidato")
-        expect(cand.nth(1).locator("pvz-foto img.lista")).to_be_visible()
-        expect(cand.nth(0).locator("pvz-foto .respaldo ion-icon")).to_be_visible()
+        expect(cand.nth(1).locator("app-foto img.lista")).to_be_visible()
+        expect(cand.nth(0).locator("app-foto .respaldo ion-icon")).to_be_visible()
         expect(cand.nth(2).get_by_text("Liebre torda")).to_be_visible()
         paso("Especies parecidas (también las que no están en el catálogo); si una foto falla se ve el icono",
-             cand.nth(0).locator("pvz-foto img").count() == 0 and cand.nth(2).evaluate("e => e.tagName") == "DIV")
+             cand.nth(0).locator("app-foto img").count() == 0 and cand.nth(2).evaluate("e => e.tagName") == "DIV")
 
         # 6. Foto borrosa
         escenario(problema="borrosa", explicacion="La imagen está movida; intenta apoyar el teléfono.")
@@ -237,9 +237,9 @@ def main() -> int:
         cat.get_by_role("button", name="Reptiles").click()
         cat.get_by_role("switch", name="Solo especies protegidas").click()
         expect(cat.get_by_text("Iguana negra")).to_be_visible()
-        page.wait_for_function("document.querySelectorAll('app-catalogo pvz-foto img.lista').length >= 5")
+        page.wait_for_function("document.querySelectorAll('app-catalogo app-foto img.lista').length >= 5")
         captura(page, "08-catalogo")
-        c = caja_foto(page, "app-catalogo pvz-foto.miniatura:has(img.lista)")
+        c = caja_foto(page, "app-catalogo app-foto.miniatura:has(img.lista)")
         paso("Catálogo muestra miniaturas cuadradas sin deformar", c["ajuste"] == "cover" and c["ancho"] == c["alto"] == 64 == c["img_ancho"] == c["img_alto"], f"({c})")
         n = cat.locator(".conteo").inner_text()
         cat.get_by_role("button", name="Todos").click()

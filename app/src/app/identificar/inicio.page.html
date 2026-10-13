@@ -49,7 +49,7 @@
       <div class="recientes">
         @for (o of recientes(); track o.id) {
           <a class="reciente" [routerLink]="['/observacion', o.id]">
-            <pvz-foto class="mini" [src]="urls()[o.ruta_foto]" [alt]="nombreDe(o)" />
+            <app-foto class="mini" [src]="urls()[o.ruta_foto]" [alt]="nombreDe(o)" />
             <span class="nombre">{{ nombreDe(o) }}</span>
             <span class="fecha">{{ fechaCorta(o.creado_en) }}</span>
           </a>

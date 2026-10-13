@@ -1,7 +1,7 @@
--- Plantas vs Zombies · Fotos de referencia del catálogo
+-- Fotos de referencia del catálogo
 -- Una foto por especie, tomada de Wikimedia Commons (licencias libres; el crédito queda en imagen_fuente).
 -- Se puede ejecutar varias veces: solo actualiza especies.imagen_url e imagen_fuente, no borra nada.
--- Ya está aplicado en el proyecto de Supabase "plantas-vs-zombies"; sirve para un proyecto nuevo (después de seed.sql).
+-- Ya está aplicado en el proyecto de Supabase; sirve para un proyecto nuevo (después de seed.sql).
 
 update public.especies e
 set imagen_url = v.url,
