@@ -1,28 +1,40 @@
 import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
-import { IonContent, IonIcon } from '@ionic/angular';
+import { IonContent, IonIcon, IonSpinner, NavController } from '@ionic/angular';
 import { SupabaseService } from '../core/supabase.service';
+import { MarcaComponent } from '../shared/marca.component';
 import { ESTILOS_ACCESO } from './auth.styles';
 
 @Component({
   selector: 'app-recuperar',
-  imports: [IonContent, IonIcon, FormsModule, RouterLink],
+  imports: [FormsModule, IonContent, IonIcon, IonSpinner, MarcaComponent, RouterLink],
   template: `
     <ion-content>
       <header class="cabecera">
-        <div class="marca"><ion-icon name="leaf-outline" /></div>
+        <div class="arriba">
+          <button class="volver" type="button" aria-label="Volver" (click)="volver()"><ion-icon name="arrow-back" /></button>
+          <app-marca [tamano]="38" />
+        </div>
         <h1>Recupera tu contraseña</h1>
         <p>Te enviaremos un enlace para crear una nueva.</p>
       </header>
-      <form (ngSubmit)="enviar()">
-        <label>Correo electrónico
-          <input type="email" name="email" autocomplete="email" required [(ngModel)]="email" />
-        </label>
-        @if (error()) { <p class="error" role="alert">{{ error() }}</p> }
-        @if (enviado()) { <p class="ok" role="status">Si existe una cuenta con ese correo, te llegará un enlace en unos minutos.</p> }
-        <button class="boton" type="submit" [disabled]="cargando()">Enviar enlace</button>
-      </form>
+      @if (enviado()) {
+        <div class="tarjeta-acceso">
+          <p class="ok-formulario">Si existe una cuenta con <strong>{{ email }}</strong>, te llegará un correo con el enlace. Revisa también tu carpeta de spam.</p>
+          <a class="boton" routerLink="/entrar">Volver a iniciar sesión</a>
+        </div>
+      } @else {
+        <form (ngSubmit)="enviar()">
+          <label class="campo">Correo electrónico
+            <input type="email" name="email" autocomplete="email" inputmode="email" required [(ngModel)]="email" />
+          </label>
+          @if (error()) { <p class="error-formulario" role="alert">{{ error() }}</p> }
+          <button class="boton" type="submit" [disabled]="cargando()">
+            @if (cargando()) { <ion-spinner name="crescent" /> } Enviar enlace
+          </button>
+        </form>
+      }
       <div class="enlaces"><a routerLink="/entrar">Volver a iniciar sesión</a></div>
     </ion-content>
   `,
@@ -31,10 +43,15 @@ import { ESTILOS_ACCESO } from './auth.styles';
 })
 export class RecuperarPage {
   private readonly sb = inject(SupabaseService);
+  private readonly nav = inject(NavController);
   email = '';
   readonly cargando = signal(false);
   readonly error = signal('');
   readonly enviado = signal(false);
+
+  volver(): void {
+    this.nav.back();
+  }
 
   async enviar(): Promise<void> {
     if (!this.email.includes('@')) {

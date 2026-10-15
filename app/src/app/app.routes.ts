@@ -1,8 +1,9 @@
 import { Routes } from '@angular/router';
-import { conSesion, sinSesion } from './core/auth.guard';
+import { conSesion, sinSesion, soloAdmin } from './core/auth.guard';
 
 export const routes: Routes = [
-  { path: '', pathMatch: 'full', redirectTo: 'app/identificar' },
+  { path: '', pathMatch: 'full', redirectTo: 'app/inicio' },
+  { path: 'bienvenida', canActivate: [sinSesion], loadComponent: () => import('./auth/bienvenida.page').then((m) => m.BienvenidaPage) },
   { path: 'entrar', canActivate: [sinSesion], loadComponent: () => import('./auth/login.page').then((m) => m.LoginPage) },
   { path: 'registro', canActivate: [sinSesion], loadComponent: () => import('./auth/registro.page').then((m) => m.RegistroPage) },
   { path: 'recuperar', loadComponent: () => import('./auth/recuperar.page').then((m) => m.RecuperarPage) },
@@ -12,15 +13,20 @@ export const routes: Routes = [
     canActivate: [conSesion],
     loadComponent: () => import('./tabs/tabs.page').then((m) => m.TabsPage),
     children: [
-      { path: 'identificar', loadComponent: () => import('./identificar/inicio.page').then((m) => m.InicioPage) },
+      { path: 'inicio', loadComponent: () => import('./inicio/inicio.page').then((m) => m.InicioPage) },
       { path: 'explorar', loadComponent: () => import('./especies/catalogo.page').then((m) => m.CatalogoPage) },
-      { path: 'historial', loadComponent: () => import('./observaciones/historial.page').then((m) => m.HistorialPage) },
+      { path: 'coleccion', loadComponent: () => import('./coleccion/coleccion.page').then((m) => m.ColeccionPage) },
       { path: 'perfil', loadComponent: () => import('./perfil/perfil.page').then((m) => m.PerfilPage) },
-      { path: '', pathMatch: 'full', redirectTo: 'identificar' },
+      // Direcciones de la versión anterior
+      { path: 'identificar', redirectTo: 'inicio' },
+      { path: 'historial', redirectTo: 'coleccion' },
+      { path: '', pathMatch: 'full', redirectTo: 'inicio' },
     ],
   },
-  { path: 'analizando', canActivate: [conSesion], loadComponent: () => import('./identificar/analizando.page').then((m) => m.AnalizandoPage) },
+  { path: 'identificar', canActivate: [conSesion], loadComponent: () => import('./identificar/identificar.page').then((m) => m.IdentificarPage) },
+  { path: 'analizando', redirectTo: 'identificar' },
   { path: 'observacion/:id', canActivate: [conSesion], loadComponent: () => import('./observaciones/observacion.page').then((m) => m.ObservacionPage) },
   { path: 'especie/:id', canActivate: [conSesion], loadComponent: () => import('./especies/ficha.page').then((m) => m.FichaPage) },
-  { path: '**', redirectTo: 'app/identificar' },
+  { path: 'revision', canActivate: [soloAdmin], loadComponent: () => import('./admin/revision.page').then((m) => m.RevisionPage) },
+  { path: '**', redirectTo: 'app/inicio' },
 ];

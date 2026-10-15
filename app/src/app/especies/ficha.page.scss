@@ -1,33 +1,30 @@
-.hero { position: relative; aspect-ratio: 1 / 1; max-height: 440px; width: 100%; background: var(--app-verde); }
-.hero.sin-foto { aspect-ratio: auto; height: 260px; }
-.portada { position: absolute; inset: 0; width: 100%; height: 100%; --app-foto-icono: 72px; }
-.degradado { position: absolute; inset: auto 0 0 0; height: 220px; background: linear-gradient(rgba(6,30,22,0), rgba(6,30,22,.88)); }
-.volver { position: absolute; top: calc(16px + env(safe-area-inset-top)); left: 18px; width: 44px; height: 44px; border-radius: 22px; border: 0; background: #fff; color: var(--app-texto); display: flex; align-items: center; justify-content: center; font-size: 22px; }
-.titulo { position: absolute; left: 22px; right: 22px; bottom: 24px; color: #fff; display: flex; flex-direction: column; gap: 6px; }
-.chips { display: flex; gap: 8px; flex-wrap: wrap; }
-.chip.claro { background: rgba(255,255,255,.2); color: #fff; }
-.chip.ambar-fuerte { background: var(--app-ambar); color: #3d2402; }
-h1 { margin: 0; font-size: 32px; line-height: 1.1; }
-.titulo em { font-size: 17px; color: #d5e6dc; }
-.credito { margin: 6px 18px 0; text-align: right; font-size: 11px; }
-.credito a { color: var(--app-texto-suave); }
-.cuerpo { padding: 20px 18px 28px; display: flex; flex-direction: column; gap: 22px; }
-section { display: flex; flex-direction: column; gap: 8px; }
-h2 { margin: 0; font-size: 18px; display: flex; align-items: center; gap: 8px; }
-section p { margin: 0; font-size: 15px; line-height: 1.6; color: #2c3a33; }
-.tabla { background: #fff; border-radius: 20px; padding: 6px 16px; gap: 0; }
-.tabla div { display: flex; justify-content: space-between; gap: 16px; padding: 12px 0; border-bottom: 1px solid var(--app-borde); font-size: 14px; }
-.tabla div:last-child { border-bottom: 0; }
-.tabla span { color: var(--app-texto-suave); font-weight: 700; flex: none; }
-.tabla strong { text-align: right; }
-.conservacion { background: var(--app-ambar-claro); border-radius: 20px; padding: 16px; color: #5a3104; }
-.conservacion p { color: #5a3104; font-size: 14px; }
-.conservacion.gris { background: #e7ece8; color: #2c3a33; }
-.conservacion.gris p { color: #2c3a33; }
-.avistamiento { background: #fff; border-radius: 16px; padding: 12px; display: flex; gap: 12px; align-items: center; }
-.avistamiento .mini { width: 56px; height: 56px; border-radius: 12px; }
-.avistamiento div { display: flex; flex-direction: column; font-size: 14px; }
-.avistamiento span { font-size: 12px; color: var(--app-texto-suave); }
-a.boton { text-decoration: none; height: 56px; font-size: 16px; }
-a.boton ion-icon { font-size: 22px; }
-.nota-ia { margin: -8px 0 0; font-size: 13px; color: var(--app-texto-suave); }
+.portada-cargando { height: 50vh; border-radius: 0 0 var(--radio-xl) var(--radio-xl); }
+.hero { position: relative; height: 52vh; min-height: 320px; max-height: 480px; border-radius: 0 0 var(--radio-xl) var(--radio-xl); overflow: hidden; background: var(--grupo-suave); }
+.hero.sin-foto { height: 300px; min-height: 0; }
+.portada { position: absolute; inset: 0; width: 100%; height: 100%; --app-foto-icono: 64px; }
+.icono-grande { display: flex; align-items: center; justify-content: center; font-size: 90px; color: var(--grupo); opacity: .55; }
+.degradado { position: absolute; inset: 0; background: linear-gradient(180deg, rgba(0, 0, 0, .25) 0%, transparent 30%, transparent 45%, rgba(10, 16, 13, .82) 100%); pointer-events: none; }
+.volver { position: absolute; top: calc(12px + env(safe-area-inset-top)); left: 14px; }
+.titulo { position: absolute; left: 20px; right: 20px; bottom: 24px; display: flex; flex-direction: column; gap: 6px; color: #fff; }
+.titulo h1 { margin: 6px 0 0; font-size: 34px; color: #fff; }
+.titulo .cientifico { color: rgba(255, 255, 255, .85); font-size: 19px; }
+.chips { display: flex; flex-wrap: wrap; gap: 8px; }
+.sin-foto .titulo { color: var(--c-texto); }
+.sin-foto .titulo h1 { color: var(--c-texto); }
+.sin-foto .titulo .cientifico { color: var(--c-texto-2); }
+.sin-foto .degradado { display: none; }
+
+.cuerpo { padding: 14px 18px 32px; display: flex; flex-direction: column; gap: 18px; }
+.credito { margin: -4px 0 0; font-size: 12px; text-align: right; }
+.credito a { color: var(--c-texto-3); }
+.descripcion { margin: 0; font-size: 16.5px; line-height: 1.65; color: var(--c-texto); }
+.datos { margin: 0; display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.datos div { background: var(--c-superficie); border: 1px solid var(--c-borde); border-radius: var(--radio-m); padding: 12px 14px; }
+.datos .ancho { grid-column: span 2; }
+.datos dt { display: flex; align-items: center; gap: 6px; font-size: 12.5px; color: var(--c-texto-3); font-weight: 750; }
+.datos dt ion-icon { color: var(--grupo); font-size: 15px; }
+.datos dd { margin: 4px 0 0; font-size: 15.5px; font-weight: 750; line-height: 1.35; }
+.nota-ia { margin: 0; display: flex; gap: 8px; align-items: flex-start; font-size: 13px; color: var(--c-texto-3); line-height: 1.5; }
+.nota-ia ion-icon { flex: none; font-size: 16px; color: var(--c-acento); margin-top: 1px; }
+.seccion-cabecera span { font-weight: 800; }
+.sin-avistamientos { margin: 0; font-size: 14.5px; }

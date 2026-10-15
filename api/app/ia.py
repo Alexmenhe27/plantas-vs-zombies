@@ -1,19 +1,25 @@
-"""Identificación de especies con Google Gemini (plan gratuito): visión + respuesta en JSON.
+"""Identificación de especies con Claude (Anthropic), en dos pasos:
 
-Gemini identifica cualquier animal o planta del mundo y devuelve también los datos de su ficha.
-Ya no se le manda el catálogo completo: la petición es más corta y la respuesta llega más rápido.
+1. identificar(): mira la foto y responde solo lo necesario para decidir (nombres, grupo, confianza, especies
+   parecidas y una explicación corta). La respuesta llega por partes (streaming): en cuanto Claude escribe el
+   nombre se avisa, sin esperar al resto. Antes Claude escribía también la ficha completa en cada foto,
+   aunque la especie ya estuviera en el catálogo: era lo más lento.
+2. escribir_ficha(): descripción, hábitat, alimentación, tamaño, NOM-059... Solo para especies nuevas en el
+   catálogo. No necesita la foto, así que es barato, y se hace después de mostrar el resultado.
 """
 import asyncio
 import base64
+import json
 import logging
 import re
-import time
+from collections.abc import Awaitable, Callable
 from typing import Literal
 
-import httpx
+import anthropic
 from pydantic import BaseModel, Field
 
 from .config import settings
+from .taxonomia import normalizar_nombre
 
 log = logging.getLogger("api")
 
@@ -22,38 +28,61 @@ GRUPOS_ANIMAL = ["ave", "mamifero", "reptil", "anfibio", "pez", "insecto", "inve
 GRUPOS_PLANTA = ["arbol", "arbusto", "cactacea", "agave", "flor", "palma", "helecho", "planta"]
 
 SISTEMA = """Eres un biólogo de campo experto en fauna y flora de todo el mundo, con especial conocimiento de México.
-Recibes una foto tomada por una persona del público general.
+Recibes una foto tomada por una persona del público general. Identifica el organismo principal: el más grande, nítido o centrado.
 
 1. problema: "borrosa" si no se distingue el organismo (foto muy borrosa, oscura o movida);
-   "sin_organismo" si no hay un animal ni una planta reconocible (paisaje, objetos, personas, mascotas domésticas
-   comunes como perros o gatos, hongos); en los demás casos "ninguno".
-2. Si la foto sirve, identifica la especie lo más preciso que puedas:
-   - nombre_cientifico: binomial "Género especie" (sin autor ni año). Si solo puedes llegar al género, "Género sp.".
+   "sin_organismo" si no hay ningún animal ni planta reconocible (paisaje sin un organismo claro, objetos, solo personas,
+   hongos, dibujos o pantallas); en los demás casos "ninguno". Cualquier animal cuenta, también los domésticos y de granja
+   (perros, gatos, gallinas, vacas...) y los insectos, arañas, peces o aves pequeñas.
+2. Si la foto sirve:
    - nombre_comun: el nombre común más usado en México, en español.
+   - nombre_cientifico: "Género especie" con la taxonomía vigente (la que usan GBIF e iNaturalist), sin autor ni año.
+     En animales domésticos usa la forma doméstica (Canis lupus familiaris, Felis catus, Gallus gallus domesticus).
+     Si solo puedes llegar al género, "Género sp.".
    - reino: "animal" o "planta". grupo: uno de la lista permitida.
-   - familia: familia taxonómica.
-   - descripcion (2 frases), habitat, alimentacion (solo animales; null en plantas) y tamano (ej. "70 a 75 cm"): breves, en español sencillo.
-   - categoria_nom059: categoría en la NOM-059-SEMARNAT-2010 ("P", "A", "Pr" o "E") SOLO si estás seguro; si no, null.
-   - introducida: true si la especie no es nativa de México.
 3. confianza de 0 a 1, honesta: menos de 0.7 si dudas entre especies parecidas o la foto no muestra los rasgos que las distinguen.
-4. candidatos: hasta 3 especies posibles (incluida la elegida), de mayor a menor confianza.
-5. explicacion: 2 o 3 frases en español sencillo sobre qué rasgos de la foto te llevaron a la respuesta.
+4. candidatos: hasta 3 especies posibles (incluida la elegida), de mayor a menor confianza, cada una con su grupo.
+5. explicacion: 1 o 2 frases en español sencillo con los rasgos de la foto que te llevaron a la respuesta.
    Si la foto no sirve, da un consejo concreto para tomar una mejor.
-Si problema no es "ninguno", deja en null los datos de la especie y candidatos vacío."""
+Si problema no es "ninguno", deja en null nombre_comun, nombre_cientifico, reino y grupo, y candidatos vacío."""
+
+SISTEMA_FICHA = """Eres un biólogo que escribe fichas de especies para una app de divulgación en México, en español sencillo.
+Para la especie indicada:
+- descripcion: 2 frases: cómo reconocerla y un dato interesante.
+- habitat: dónde vive, breve.
+- alimentacion: qué come (solo animales; null en plantas).
+- tamano: tamaño típico (ej. "70 a 75 cm", "3 a 5 m de altura").
+- familia: familia taxonómica.
+- categoria_nom059: categoría en la NOM-059-SEMARNAT-2010 ("P", "A", "Pr" o "E") SOLO si estás seguro; si no, null.
+- introducida: true si no es nativa de México (las domésticas y cultivadas de origen extranjero también cuentan)."""
 
 
 class Candidato(BaseModel):
     nombre_cientifico: str
     nombre_comun: str | None = None
+    grupo: str | None = None
     confianza: float
 
 
+class Identificacion(BaseModel):
+    problema: Literal["ninguno", "borrosa", "sin_organismo"]
+    nombre_comun: str | None = None
+    nombre_cientifico: str | None = None
+    reino: Literal["animal", "planta"] | None = None
+    grupo: str | None = None
+    confianza: float = 0.0
+    candidatos: list[Candidato] = Field(default_factory=list)
+    explicacion: str = ""
+    # Tokens que usó Claude (para medir el gasto); no forma parte de la respuesta del modelo.
+    uso: dict = Field(default_factory=dict, exclude=True)
+
+    @property
+    def tiene_especie(self) -> bool:
+        return self.problema == "ninguno" and bool(self.nombre_cientifico)
+
+
 class Ficha(BaseModel):
-    """Datos para crear la especie en el catálogo si todavía no existe."""
-    nombre_cientifico: str
-    nombre_comun: str
-    reino: Literal["animal", "planta"]
-    grupo: str
+    """Datos para completar la especie en el catálogo."""
     familia: str | None = None
     descripcion: str | None = None
     habitat: str | None = None
@@ -63,138 +92,146 @@ class Ficha(BaseModel):
     introducida: bool = False
 
 
-class Resultado(BaseModel):
-    problema: Literal["ninguno", "borrosa", "sin_organismo"]
-    especie: Ficha | None = None
-    confianza: float = 0.0
-    explicacion: str = ""
-    candidatos: list[Candidato] = Field(default_factory=list)
-
-
 class IAError(Exception):
-    """Fallo al hablar con Gemini. El texto es para la persona; `detalle` es lo técnico, para la terminal de la API."""
+    """Fallo al hablar con Claude. El texto es para la persona; `detalle` es lo técnico, para la terminal de la API."""
 
     def __init__(self, mensaje: str, detalle: str = ""):
         super().__init__(mensaje)
         self.detalle = detalle or mensaje
 
 
-def _error_de_gemini(status: int, cuerpo: str, modelo: str | None = None) -> IAError:
-    modelo = modelo or settings.ia_modelo
-    detalle = f"{modelo} respondió {status}: {cuerpo[:500]}"
-    texto = cuerpo.lower()
-    if status == 429:
-        return IAError("Se acabó la cuota gratuita de Gemini por ahora. Intenta más tarde.", detalle)
-    if status in (401, 403) or "api key" in texto or "api_key" in texto:
-        return IAError(
-            "La clave de Gemini no es válida o no tiene permiso. Revisa GEMINI_API_KEY en api/.env y reinicia la API.", detalle
-        )
-    if status == 404:
-        return IAError(f"El modelo de Gemini «{modelo}» no está disponible. Revisa IA_MODELO en api/.env.", detalle)
-    if status >= 500:
-        return IAError("Gemini está saturado o fuera de servicio en este momento. Intenta en un momento.", detalle)
-    return IAError("Gemini rechazó la petición. Intenta de nuevo con otra foto.", detalle)
+def _o_nulo(esquema: dict) -> dict:
+    return {"anyOf": [esquema, {"type": "null"}]}
 
 
-_TEXTO = {"type": "STRING", "nullable": True}
-# Mismo formato que Resultado, en el dialecto de esquemas que acepta Gemini.
+_TEXTO_O_NULO = _o_nulo({"type": "string"})
+_GRUPO = {"type": "string", "enum": GRUPOS_ANIMAL + GRUPOS_PLANTA}
+# El orden importa: los nombres van primero para poder mostrarlos mientras Claude escribe el resto.
+# (Se probó poner la explicación antes del nombre y responder sin razonar: más rápido, pero menos preciso.)
 ESQUEMA = {
-    "type": "OBJECT",
+    "type": "object",
     "properties": {
-        "problema": {"type": "STRING", "enum": ["ninguno", "borrosa", "sin_organismo"]},
-        "especie": {
-            "type": "OBJECT",
-            "nullable": True,
-            "properties": {
-                "nombre_cientifico": {"type": "STRING"},
-                "nombre_comun": {"type": "STRING"},
-                "reino": {"type": "STRING", "enum": ["animal", "planta"]},
-                "grupo": {"type": "STRING", "enum": GRUPOS_ANIMAL + GRUPOS_PLANTA},
-                "familia": _TEXTO,
-                "descripcion": _TEXTO,
-                "habitat": _TEXTO,
-                "alimentacion": _TEXTO,
-                "tamano": _TEXTO,
-                "categoria_nom059": {"type": "STRING", "enum": ["P", "A", "Pr", "E"], "nullable": True},
-                "introducida": {"type": "BOOLEAN"},
-            },
-            "required": ["nombre_cientifico", "nombre_comun", "reino", "grupo", "familia", "descripcion", "habitat",
-                         "alimentacion", "tamano", "categoria_nom059", "introducida"],
-        },
-        "confianza": {"type": "NUMBER"},
-        "explicacion": {"type": "STRING"},
+        "problema": {"type": "string", "enum": ["ninguno", "borrosa", "sin_organismo"]},
+        "nombre_comun": _TEXTO_O_NULO,
+        "nombre_cientifico": _TEXTO_O_NULO,
+        "reino": _o_nulo({"type": "string", "enum": ["animal", "planta"]}),
+        "grupo": _o_nulo(_GRUPO),
+        "confianza": {"type": "number"},
         "candidatos": {
-            "type": "ARRAY",
+            "type": "array",
             "items": {
-                "type": "OBJECT",
+                "type": "object",
                 "properties": {
-                    "nombre_cientifico": {"type": "STRING"},
-                    "nombre_comun": {"type": "STRING"},
-                    "confianza": {"type": "NUMBER"},
+                    "nombre_cientifico": {"type": "string"},
+                    "nombre_comun": {"type": "string"},
+                    "grupo": _GRUPO,
+                    "confianza": {"type": "number"},
                 },
-                "required": ["nombre_cientifico", "nombre_comun", "confianza"],
+                "required": ["nombre_cientifico", "nombre_comun", "grupo", "confianza"],
+                "additionalProperties": False,
             },
         },
+        "explicacion": {"type": "string"},
     },
-    "required": ["problema", "especie", "confianza", "explicacion", "candidatos"],
-    "propertyOrdering": ["problema", "especie", "confianza", "explicacion", "candidatos"],
+    "required": ["problema", "nombre_comun", "nombre_cientifico", "reino", "grupo", "confianza", "candidatos", "explicacion"],
+    "additionalProperties": False,
 }
 
-_http: httpx.AsyncClient | None = None
+ESQUEMA_FICHA = {
+    "type": "object",
+    "properties": {
+        "descripcion": {"type": "string"},
+        "habitat": {"type": "string"},
+        "alimentacion": _TEXTO_O_NULO,
+        "tamano": {"type": "string"},
+        "familia": _TEXTO_O_NULO,
+        "categoria_nom059": _o_nulo({"type": "string", "enum": ["P", "A", "Pr", "E"]}),
+        "introducida": {"type": "boolean"},
+    },
+    "required": ["descripcion", "habitat", "alimentacion", "tamano", "familia", "categoria_nom059", "introducida"],
+    "additionalProperties": False,
+}
+
+_cliente: anthropic.AsyncAnthropic | None = None
 
 
-def http() -> httpx.AsyncClient:
-    global _http
-    if _http is None:
-        _http = httpx.AsyncClient(timeout=httpx.Timeout(settings.ia_tiempo_maximo, connect=10))
-    return _http
+def cliente() -> anthropic.AsyncAnthropic:
+    global _cliente
+    if _cliente is None:
+        cabeceras = {"anthropic-workspace-id": settings.anthropic_workspace_id} if settings.anthropic_workspace_id else None
+        _cliente = anthropic.AsyncAnthropic(
+            api_key=settings.anthropic_api_key,
+            base_url=settings.ia_url,
+            default_headers=cabeceras,
+            timeout=settings.ia_tiempo_maximo,
+            max_retries=1,  # un reintento automático si Claude está saturado (429, 5xx o 529)
+        )
+    return _cliente
 
 
-def modelos_a_probar() -> list[str]:
-    """El modelo de IA_MODELO y después los de respaldo, sin repetir."""
-    return list(dict.fromkeys([settings.ia_modelo, *settings.ia_modelos_respaldo]))
+def _error(e: Exception) -> IAError:
+    """Traduce cada fallo de Claude a un mensaje que diga qué hacer."""
+    if isinstance(e, (anthropic.APITimeoutError, TimeoutError)):
+        return IAError("Claude tardó demasiado en responder. Intenta de nuevo en un momento.",
+                       f"Tiempo agotado ({settings.ia_tiempo_maximo} s por trozo, {settings.ia_tiempo_total} s en total): {e!r}")
+    if isinstance(e, anthropic.APIConnectionError):
+        return IAError("La API no pudo conectarse a Claude. Revisa el internet de la computadora donde corre la API.", repr(e))
+    if not isinstance(e, anthropic.APIStatusError):
+        return IAError("Ocurrió un error inesperado al hablar con Claude. Intenta de nuevo.", repr(e))
+    detalle = f"Claude respondió {e.status_code}: {str(e)[:800]}"
+    texto = str(e).lower()
+    if "not scoped to a workspace" in texto:
+        return IAError(
+            "Tu clave de Claude es de ámbito «Organización» y no sirve sola. Crea en console.anthropic.com > API Keys una clave "
+            "del espacio de trabajo «Default» y ponla en ANTHROPIC_API_KEY (api/.env), o agrega ANTHROPIC_WORKSPACE_ID.", detalle)
+    if "workspace" in texto and "valid" in texto:
+        return IAError("ANTHROPIC_WORKSPACE_ID en api/.env no es un ID de espacio de trabajo válido (empieza con wrkspc_).", detalle)
+    if e.status_code == 402 or "credit balance" in texto or "billing" in texto:
+        return IAError("Tu cuenta de Claude no tiene saldo. Carga crédito en console.anthropic.com (Billing) y vuelve a intentar.", detalle)
+    if e.status_code == 401:
+        return IAError("La clave de Claude no es válida. Revisa ANTHROPIC_API_KEY en api/.env (debe ser la clave completa, "
+                       "de unos 100 caracteres) y reinicia la API.", detalle)
+    if e.status_code == 403:
+        return IAError("La clave de Claude no tiene permiso para usar este modelo. Revisa tu cuenta en console.anthropic.com.", detalle)
+    if e.status_code == 404:
+        return IAError(f"El modelo de Claude «{settings.ia_modelo}» no está disponible. Revisa IA_MODELO en api/.env.", detalle)
+    if "could not process image" in texto:
+        return IAError("Claude no pudo leer esa imagen. Intenta con otra foto (JPG o PNG).", detalle)
+    if e.status_code == 413:
+        return IAError("La foto es demasiado grande. Intenta con otra.", detalle)
+    if e.status_code == 429:
+        return IAError("Se alcanzó el límite de uso de Claude por ahora. Intenta en un momento.", detalle)
+    if e.status_code >= 500:
+        return IAError("Claude está saturado o fuera de servicio en este momento. Intenta en un momento.", detalle)
+    # Cualquier otro rechazo: se muestra el motivo que da Claude para no esconder la causa.
+    motivo = getattr(e, "message", "") or str(e)
+    return IAError(f"Claude rechazó la petición: {motivo[:300]}", detalle)
 
 
-def _ajuste_de_razonamiento(modelo: str) -> dict | None:
-    """Pide razonamiento corto: es la mayor ganancia de velocidad. Cada familia de modelos lo pide distinto."""
-    if modelo.startswith(("gemini-1.", "gemini-2.0")):
-        return None
-    if modelo.startswith("gemini-2.5"):
-        return {"thinkingBudget": 0 if "pro" not in modelo else 128}
-    return {"thinkingLevel": "low"}
-
-
-SIN_RESULTADO = Resultado(
+SIN_RESULTADO = Identificacion(
     problema="sin_organismo",
     explicacion="No pudimos identificar esta foto. Intenta con otra en la que el animal o la planta se vea más de cerca.",
 )
 
 
-def normalizar_nombre(nombre: str) -> str:
-    """'ara  MILITARIS' -> 'Ara militaris' (para no duplicar especies por mayúsculas o espacios)."""
-    partes = re.sub(r"\s+", " ", nombre.strip()).split(" ")
-    if not partes or not partes[0]:
-        return ""
-    return " ".join([partes[0].capitalize()] + [p.lower() for p in partes[1:]])
-
-
-def _limpiar(r: Resultado) -> Resultado:
+def _limpiar(r: Identificacion) -> Identificacion:
     r.confianza = max(0.0, min(1.0, r.confianza))
     if r.problema != "ninguno":
-        r.especie, r.candidatos = None, []
+        r.nombre_comun = r.nombre_cientifico = r.reino = r.grupo = None
+        r.candidatos = []
         return r
-    if r.especie:
-        r.especie.nombre_cientifico = normalizar_nombre(r.especie.nombre_cientifico)
-        if r.especie.grupo not in (GRUPOS_ANIMAL if r.especie.reino == "animal" else GRUPOS_PLANTA):
-            r.especie.grupo = "invertebrado" if r.especie.reino == "animal" else "planta"
-        if r.especie.reino == "planta":
-            r.especie.alimentacion = None
-    if not r.especie or not r.especie.nombre_cientifico:
-        return SIN_RESULTADO.model_copy()
+    r.nombre_cientifico = normalizar_nombre(r.nombre_cientifico or "")
+    if not r.nombre_cientifico or not r.reino:
+        return SIN_RESULTADO.model_copy(update={"uso": r.uso})
+    r.nombre_comun = (r.nombre_comun or "").strip() or r.nombre_cientifico
+    if r.grupo not in (GRUPOS_ANIMAL if r.reino == "animal" else GRUPOS_PLANTA):
+        r.grupo = "invertebrado" if r.reino == "animal" else "planta"
     vistos, candidatos = set(), []
     for c in r.candidatos:
         c.nombre_cientifico = normalizar_nombre(c.nombre_cientifico)
         c.confianza = round(max(0.0, min(1.0, c.confianza)), 3)
+        if c.grupo not in GRUPOS_ANIMAL + GRUPOS_PLANTA:
+            c.grupo = None
         if c.nombre_cientifico and c.nombre_cientifico not in vistos:
             vistos.add(c.nombre_cientifico)
             candidatos.append(c)
@@ -202,88 +239,140 @@ def _limpiar(r: Resultado) -> Resultado:
     return r
 
 
-async def _pedir(modelo: str, cuerpo: dict, segundos: float) -> httpx.Response:
-    url = f"{settings.ia_url}/v1beta/models/{modelo}:generateContent"
-    try:
-        return await http().post(
-            url, json=cuerpo, headers={"x-goog-api-key": settings.gemini_api_key},
-            timeout=httpx.Timeout(segundos, connect=min(10, segundos)),
-        )
-    except httpx.TimeoutException as e:
-        raise IAError(
-            "Gemini tardó demasiado en responder. Intenta de nuevo en un momento.", f"{modelo}: tiempo agotado ({segundos:.0f} s): {e!r}"
-        ) from e
-    except httpx.HTTPError as e:
-        raise IAError("La API no pudo conectarse a Gemini. Revisa el internet de la computadora donde corre la API.", repr(e)) from e
+def reino_de(grupo: str | None) -> str | None:
+    if grupo in GRUPOS_ANIMAL:
+        return "animal"
+    if grupo in GRUPOS_PLANTA:
+        return "planta"
+    return None
 
 
-def _cuerpo(imagen: bytes, tipo: str, pista: str, modelo: str) -> dict:
-    config: dict = {"responseMimeType": "application/json", "responseSchema": ESQUEMA}
-    razonamiento = _ajuste_de_razonamiento(modelo)
-    if razonamiento:
-        config["thinkingConfig"] = razonamiento
-    return {
-        "systemInstruction": {"parts": [{"text": SISTEMA}]},
-        "contents": [{
-            "role": "user",
-            "parts": [{"inlineData": {"mimeType": tipo, "data": base64.b64encode(imagen).decode()}}, {"text": pista}],
-        }],
-        "generationConfig": config,
-    }
+def _tipo_real(imagen: bytes, tipo: str) -> str:
+    """El tipo según los primeros bytes de la foto: Claude rechaza la petición si no coincide con el declarado."""
+    if imagen[:2] == b"\xff\xd8":
+        return "image/jpeg"
+    if imagen[:8] == b"\x89PNG\r\n\x1a\n":
+        return "image/png"
+    if imagen[:4] == b"GIF8":
+        return "image/gif"
+    if imagen[:4] == b"RIFF" and imagen[8:12] == b"WEBP":
+        return "image/webp"
+    return tipo if tipo in TIPOS_IMAGEN else "image/jpeg"
 
 
-async def _con_modelo(modelo: str, imagen: bytes, tipo: str, pista: str, limite: float) -> httpx.Response:
-    """Pide la identificación a un modelo. Devuelve la respuesta (aunque sea un error) o lanza IAError (tiempo / red)."""
-    cuerpo = _cuerpo(imagen, tipo, pista, modelo)
-    r = await _pedir(modelo, cuerpo, max(1.0, min(settings.ia_tiempo_maximo, limite - time.monotonic())))
-    if r.status_code == 400 and "thinking" in r.text.lower() and "thinkingConfig" in cuerpo["generationConfig"]:
-        # El modelo no acepta ese ajuste de razonamiento: se repite sin él.
-        log.info("El modelo %s no acepta thinkingConfig; se repite sin ese ajuste.", modelo)
-        del cuerpo["generationConfig"]["thinkingConfig"]
-        r = await _pedir(modelo, cuerpo, max(1.0, min(settings.ia_tiempo_maximo, limite - time.monotonic())))
-    if r.status_code in (500, 502, 503, 504) and limite - time.monotonic() > 10:
-        # Gemini a veces responde "saturado" un instante; un segundo intento suele funcionar.
-        await asyncio.sleep(1)
-        r = await _pedir(modelo, cuerpo, max(1.0, min(settings.ia_tiempo_maximo, limite - time.monotonic())))
-    return r
-
-
-def _leer(r: httpx.Response) -> Resultado:
-    # Si Gemini bloquea la foto o la respuesta no trae el JSON esperado, se guarda como "no identificada".
-    try:
-        partes = r.json()["candidates"][0]["content"]["parts"]
-        texto = "".join(p.get("text", "") for p in partes if not p.get("thought"))
-        return _limpiar(Resultado.model_validate_json(texto))
-    except (KeyError, IndexError, TypeError, ValueError) as e:
-        log.warning("Respuesta de Gemini que no se pudo leer: %r · %s", e, r.text[:300])
-        return SIN_RESULTADO.model_copy()
-
-
-async def identificar(imagen: bytes, tipo: str, latitud: float | None = None, longitud: float | None = None) -> Resultado:
-    """Prueba el modelo configurado y, si no existe, no tiene cuota, falla o tarda demasiado, los de respaldo."""
-    if tipo not in TIPOS_IMAGEN:
-        tipo = "image/jpeg"
+def _pista(latitud: float | None, longitud: float | None) -> str:
     pista = "Identifica el animal o la planta de esta foto."
     if latitud is not None and longitud is not None:
         pista += f" La foto se tomó cerca de latitud {latitud:.2f}, longitud {longitud:.2f}."
+    return pista
 
-    limite = time.monotonic() + settings.ia_tiempo_total
-    ultimo: IAError | None = None
-    for modelo in modelos_a_probar():
-        if limite - time.monotonic() < 3:
-            break
-        inicio = time.monotonic()
-        try:
-            r = await _con_modelo(modelo, imagen, tipo, pista, limite)
-        except IAError as e:
-            log.warning("Gemini (%s) falló: %s", modelo, e.detalle)
-            ultimo = e
-            continue
-        if r.status_code == 200:
-            log.info("Identificado con %s en %.1f s", modelo, time.monotonic() - inicio)
-            return _leer(r)
-        ultimo = _error_de_gemini(r.status_code, r.text, modelo)
-        log.warning("Gemini (%s) falló: %s", modelo, ultimo.detalle)
-        if r.status_code in (401, 403) or (r.status_code == 400 and "api key" in r.text.lower()):
-            break  # la clave no sirve: ningún otro modelo va a funcionar
-    raise ultimo or IAError("Gemini tardó demasiado en responder. Intenta de nuevo en un momento.", "Sin tiempo para probar modelos")
+
+def _razonamiento() -> dict:
+    """Con "sin", Claude responde sin razonar antes (más rápido). Con "bajo", razona un poco (adaptativo)."""
+    return {"thinking": {"type": "disabled"}} if settings.ia_razonamiento == "sin" else {}
+
+
+# ------------------------------------------------------------------ lectura de la respuesta parcial
+_CAMPO_TEXTO = re.compile(r'"(problema|explicacion|nombre_comun|nombre_cientifico|reino|grupo)"\s*:\s*(null|"((?:[^"\\]|\\.)*)")')
+_CAMPO_CONFIANZA = re.compile(r'"confianza"\s*:\s*(-?\d+(?:\.\d+)?)\s*[,}]')
+# La explicación se muestra mientras se escribe (todavía sin las comillas de cierre).
+_EXPLICACION_A_MEDIAS = re.compile(r'"explicacion"\s*:\s*"((?:[^"\\]|\\.)*)$')
+
+
+def campos_listos(texto: str) -> dict:
+    """Campos ya completos en un JSON que todavía se está escribiendo (los de antes de "candidatos" y la explicación)."""
+    corte = texto.find('"candidatos"')
+    fin = texto.find('"explicacion"')
+    parte = texto if corte < 0 else texto[:corte] + (texto[fin:] if fin > corte else "")
+    datos: dict = {}
+    for m in _CAMPO_TEXTO.finditer(parte):
+        datos[m.group(1)] = None if m.group(2) == "null" else json.loads('"' + m.group(3) + '"')
+    m = _CAMPO_CONFIANZA.search(parte)
+    if m:
+        datos["confianza"] = max(0.0, min(1.0, float(m.group(1))))
+    if "explicacion" not in datos:
+        m = _EXPLICACION_A_MEDIAS.search(parte.rstrip("\\"))
+        if m:
+            try:
+                datos["explicacion"] = json.loads('"' + m.group(1) + '"')
+            except ValueError:
+                pass
+    if datos.get("nombre_cientifico"):
+        datos["nombre_cientifico"] = normalizar_nombre(datos["nombre_cientifico"])
+    return datos
+
+
+AlAvanzar = Callable[[dict], Awaitable[None]]
+
+
+async def identificar(imagen: bytes, tipo: str, latitud: float | None = None, longitud: float | None = None,
+                      al_avanzar: AlAvanzar | None = None) -> Identificacion:
+    """Identifica la foto. Si se pasa `al_avanzar`, se le avisa cada vez que hay campos nuevos completos."""
+    tipo = _tipo_real(imagen, tipo)
+    texto, avisado = "", {}
+    try:
+        async with asyncio.timeout(settings.ia_tiempo_total):
+            async with cliente().messages.stream(
+                model=settings.ia_modelo,
+                max_tokens=6000,
+                # Las instrucciones son siempre iguales: se guardan en caché (más barato y un poco más rápido).
+                system=[{"type": "text", "text": SISTEMA, "cache_control": {"type": "ephemeral"}}],
+                messages=[{
+                    "role": "user",
+                    "content": [
+                        {"type": "image", "source": {"type": "base64", "media_type": tipo,
+                                                     "data": base64.b64encode(imagen).decode()}},
+                        {"type": "text", "text": _pista(latitud, longitud)},
+                    ],
+                }],
+                output_config={"effort": "low", "format": {"type": "json_schema", "schema": ESQUEMA}},
+                **_razonamiento(),
+            ) as stream:
+                async for trozo in stream.text_stream:
+                    texto += trozo
+                    if al_avanzar is not None:
+                        listos = campos_listos(texto)
+                        if listos != avisado:
+                            avisado = listos
+                            await al_avanzar(dict(listos))
+                final = await stream.get_final_message()
+    except (anthropic.APIError, TimeoutError) as e:
+        raise _error(e) from e
+
+    uso = final.usage.model_dump(exclude_none=True) if final.usage else {}
+    # Si Claude declina la foto o la respuesta queda incompleta, se guarda como "no identificada".
+    if final.stop_reason in ("refusal", "max_tokens"):
+        log.warning("Claude terminó con stop_reason=%s; la foto queda como no identificada.", final.stop_reason)
+        return SIN_RESULTADO.model_copy(update={"uso": uso})
+    try:
+        completo = "".join(b.text for b in final.content if b.type == "text")
+        resultado = Identificacion.model_validate_json(completo)
+    except ValueError as e:
+        log.warning("Respuesta de Claude que no se pudo leer: %r", e)
+        return SIN_RESULTADO.model_copy(update={"uso": uso})
+    resultado.uso = uso
+    return _limpiar(resultado)
+
+
+async def escribir_ficha(nombre_cientifico: str, nombre_comun: str, reino: str, grupo: str) -> Ficha:
+    """Ficha de una especie nueva en el catálogo (sin foto: solo con su nombre)."""
+    try:
+        r = await cliente().messages.create(
+            model=settings.ia_modelo,
+            max_tokens=3000,
+            system=SISTEMA_FICHA,
+            messages=[{"role": "user", "content": f"Especie: {nombre_cientifico} ({nombre_comun}). Reino: {reino}. Grupo: {grupo}."}],
+            output_config={"effort": "low", "format": {"type": "json_schema", "schema": ESQUEMA_FICHA}},
+            **_razonamiento(),
+        )
+    except anthropic.APIError as e:
+        raise _error(e) from e
+    if r.stop_reason in ("refusal", "max_tokens"):
+        raise IAError("Claude no escribió la ficha.", f"stop_reason={r.stop_reason}")
+    try:
+        ficha = Ficha.model_validate_json("".join(b.text for b in r.content if b.type == "text"))
+    except ValueError as e:
+        raise IAError("La ficha de Claude no se pudo leer.", repr(e)) from e
+    if reino == "planta":
+        ficha.alimentacion = None
+    return ficha

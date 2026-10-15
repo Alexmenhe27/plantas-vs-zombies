@@ -1,42 +1,81 @@
 <ion-content>
-  <header>
-    <h1>Explorar especies</h1>
-    <p class="texto-suave">Especies identificadas en la app</p>
-    <label class="buscar">
-      <ion-icon name="search-outline" aria-hidden="true" />
-      <input type="search" placeholder="Buscar por nombre" aria-label="Buscar especie" [value]="busqueda()" (input)="buscar($event)" />
-    </label>
+  <div class="pagina">
+    <header class="pagina-titulo">
+      <h1>Explorar</h1>
+      <p>Especies que la comunidad ha encontrado</p>
+    </header>
+
+    <div class="segmento" role="tablist" aria-label="Vista">
+      <button type="button" role="tab" [class.activo]="vista() === 'lista'" [attr.aria-selected]="vista() === 'lista'" (click)="vista.set('lista')">
+        <ion-icon name="grid-outline" />Especies
+      </button>
+      <button type="button" role="tab" [class.activo]="vista() === 'mapa'" [attr.aria-selected]="vista() === 'mapa'" (click)="verMapa()">
+        <ion-icon name="map-outline" />Mapa
+      </button>
+    </div>
+
+    @if (vista() === 'lista') {
+      <label class="buscador">
+        <ion-icon name="search-outline" aria-hidden="true" />
+        <input type="search" placeholder="Busca por nombre: búho, nopal, Ara…" aria-label="Buscar especie" [value]="busqueda()" (input)="buscar($event)" enterkeyhint="search" />
+      </label>
+    }
+
     <div class="filtros" role="group" aria-label="Filtrar por grupo">
-      <button type="button" [class.activo]="grupo() === 'todos'" (click)="grupo.set('todos')">Todos</button>
       @for (g of grupos; track g.id) {
-        <button type="button" [class.activo]="grupo() === g.id" (click)="grupo.set(g.id)">{{ g.nombre }}</button>
+        <button type="button" class="filtro" [class.activo]="grupo() === g.id" [attr.aria-pressed]="grupo() === g.id"
+                [style]="estiloGrupo({ reino: g.id === 'planta' ? 'planta' : 'animal', grupo: g.id })" (click)="elegirGrupo(g.id)">
+          <ion-icon [name]="g.icono" />{{ g.nombre }}
+        </button>
+      }
+      @if (vista() === 'lista') {
+        <button type="button" class="filtro" [class.activo]="soloProtegidas()" [attr.aria-pressed]="soloProtegidas()" (click)="cambiarProtegidas()">
+          <ion-icon name="shield-checkmark-outline" />Protegidas
+        </button>
       }
     </div>
-    <label class="protegidas">
-      <span><ion-icon name="shield-checkmark-outline" />Solo especies protegidas</span>
-      <ion-toggle [checked]="soloProtegidas()" (ionChange)="soloProtegidas.set($event.detail.checked)" aria-label="Solo especies protegidas" />
-    </label>
-  </header>
 
-  <div class="lista">
-    @if (cargando()) {
-      <div class="vacio"><ion-spinner name="crescent" /></div>
-    } @else if (error()) {
-      <div class="vacio">No pudimos cargar el catálogo. Revisa tu conexión.</div>
+    @if (vista() === 'mapa') {
+      <section class="seccion">
+        @if (puntos(); as p) {
+          <app-mapa [puntos]="p" [aproximados]="true" altura="calc(100vh - 360px)"
+                    textoVacio="Todavía no hay avistamientos públicos con ubicación." />
+        } @else {
+          <div class="esqueleto" style="height: calc(100vh - 360px); border-radius: var(--radio-l)"></div>
+        }
+        <p class="nota texto-3"><ion-icon name="lock-closed-outline" />Solo avistamientos que sus autores publicaron. La ubicación es aproximada (unos 10 km) y en especies protegidas no se muestra.</p>
+      </section>
     } @else {
-      <p class="conteo texto-suave">{{ filtradas().length }} especies</p>
-      @for (e of filtradas(); track e.id) {
-        <a class="item" [routerLink]="['/especie', e.id]">
-          <app-foto class="miniatura" [src]="e.imagen_url" [icono]="iconoEspecie(e)" />
-          <div class="texto">
-            @if (etiqueta(e); as et) { <span [class]="clase(e)">{{ et }}</span> }
-            <strong>{{ e.nombre_comun }}</strong>
-            <em>{{ e.nombre_cientifico }}</em>
-          </div>
-          <ion-icon name="chevron-forward" class="flecha" aria-hidden="true" />
-        </a>
-      } @empty {
-        <div class="vacio">No hay especies con esos filtros.</div>
+      @if (cargando()) {
+        <div class="cuadricula">
+          @for (i of [1, 2, 3, 4]; track i) { <span class="esqueleto tarjeta-cargando"></span> }
+        </div>
+      } @else if (error()) {
+        <div class="vacio">
+          <div class="icono-vacio"><ion-icon name="cloud-offline-outline" /></div>
+          <h3>No pudimos cargar el catálogo</h3>
+          <p>Revisa tu conexión e intenta de nuevo.</p>
+          <button class="boton pequeno" type="button" (click)="recargar()">Reintentar</button>
+        </div>
+      } @else {
+        <p class="conteo texto-2">
+          {{ total() ?? especies().length }} {{ (total() ?? especies().length) === 1 ? 'especie' : 'especies' }}
+          @if (hayFiltros()) { <button class="enlace" type="button" (click)="limpiar()">Quitar filtros</button> }
+        </p>
+        <div class="cuadricula">
+          @for (e of especies(); track e.id) {
+            <app-tarjeta-especie [especie]="e" />
+          } @empty {
+            <div class="vacio sin-resultados">
+              <div class="icono-vacio"><ion-icon name="leaf-outline" /></div>
+              <h3>Sin resultados</h3>
+              <p>Nadie ha fotografiado esa especie todavía. ¡Si la encuentras, será la primera!</p>
+            </div>
+          }
+        </div>
+        <ion-infinite-scroll [disabled]="!hayMas()" (ionInfinite)="masEspecies($event)">
+          <ion-infinite-scroll-content loadingSpinner="dots" />
+        </ion-infinite-scroll>
       }
     }
   </div>

@@ -17,6 +17,10 @@ export class SupabaseService {
   readonly evento = signal<AuthChangeEvent | null>(null);
   readonly userId = computed(() => this.session()?.user.id ?? null);
   readonly esAdmin = computed(() => this.perfil()?.rol === 'admin');
+  /** Invitado: entró sin cuenta (inicio de sesión anónimo de Supabase). */
+  readonly esInvitado = computed(() => !!this.session()?.user.is_anonymous);
+  /** Correo pendiente de confirmar cuando un invitado crea su cuenta. */
+  readonly correoPorConfirmar = computed(() => this.session()?.user.new_email ?? null);
 
   private readonly inicio: Promise<void>;
 
@@ -51,10 +55,15 @@ export class SupabaseService {
     if (error) throw new Error(traducirErrorAuth(error.message));
   }
 
+  /** Entrar sin cuenta. Supabase crea un usuario anónimo; sus observaciones se conservan si después crea su cuenta. */
+  async entrarComoInvitado(): Promise<void> {
+    const { error } = await this.client.auth.signInAnonymously();
+    if (error) throw new Error(traducirErrorAuth(error.message));
+  }
+
   /** Devuelve true si hay que confirmar el correo antes de entrar. */
   async registrarse(email: string, password: string, username: string): Promise<boolean> {
-    const { data: libre } = await this.client.rpc('nombre_usuario_disponible', { nombre: username });
-    if (libre === false) throw new Error('Ese nombre de usuario ya existe. Prueba con otro.');
+    await this.revisarNombreLibre(username);
     const { data, error } = await this.client.auth.signUp({
       email,
       password,
@@ -62,6 +71,29 @@ export class SupabaseService {
     });
     if (error) throw new Error(traducirErrorAuth(error.message));
     return !data.session;
+  }
+
+  /**
+   * Un invitado crea su cuenta sin perder nada: se le agrega su correo al mismo usuario.
+   * Supabase manda un correo para confirmarlo; el enlace lleva a elegir la contraseña.
+   */
+  async crearCuentaDesdeInvitado(email: string, username: string): Promise<void> {
+    await this.revisarNombreLibre(username);
+    const { error } = await this.client.auth.updateUser(
+      { email, data: { nombre_usuario: username } },
+      { emailRedirectTo: `${window.location.origin}/nueva-contrasena?alta=1` },
+    );
+    if (error) throw new Error(traducirErrorAuth(error.message));
+    const id = this.userId();
+    if (id) {
+      await this.client.from('perfiles').update({ nombre_usuario: username }).eq('id', id);
+      await this.cargarPerfil();
+    }
+  }
+
+  private async revisarNombreLibre(username: string): Promise<void> {
+    const { data: libre } = await this.client.rpc('nombre_usuario_disponible', { nombre: username });
+    if (libre === false) throw new Error('Ese nombre de usuario ya existe. Prueba con otro.');
   }
 
   async recuperarContrasena(email: string): Promise<void> {
@@ -87,6 +119,15 @@ export class SupabaseService {
     await this.cargarPerfil();
   }
 
+  /** Si las observaciones nuevas se publican (con ubicación aproximada). Por defecto: privadas. */
+  async cambiarPublicarPorDefecto(valor: boolean): Promise<void> {
+    const id = this.userId();
+    const { error } = await this.client.from('perfiles').update({ publicar_por_defecto: valor }).eq('id', id);
+    if (error) throw new Error('No se pudo guardar la preferencia.');
+    const p = this.perfil();
+    if (p) this.perfil.set({ ...p, publicar_por_defecto: valor });
+  }
+
   token(): string | null {
     return this.session()?.access_token ?? null;
   }
@@ -96,10 +137,15 @@ export function traducirErrorAuth(mensaje: string): string {
   const m = mensaje.toLowerCase();
   if (m.includes('invalid login credentials')) return 'El correo o la contraseña no son correctos.';
   if (m.includes('email not confirmed')) return 'Confirma tu correo: te enviamos un enlace al registrarte.';
-  if (m.includes('already registered') || m.includes('already been registered')) return 'Ya existe una cuenta con ese correo.';
+  if (m.includes('already registered') || m.includes('already been registered') || m.includes('email address has already'))
+    return 'Ya existe una cuenta con ese correo.';
   if (m.includes('password should be at least')) return 'La contraseña debe tener al menos 6 caracteres.';
   if (m.includes('database error saving new user')) return 'No se pudo crear la cuenta. Prueba con otro nombre de usuario.';
-  if (m.includes('rate limit')) return 'Demasiados intentos. Espera un momento y vuelve a probar.';
+  if (m.includes('anonymous sign-ins are disabled'))
+    return 'Entrar sin cuenta todavía no está activado en este servidor. Crea una cuenta gratis para continuar.';
+  if (m.includes('rate limit') || m.includes('too many')) return 'Demasiados intentos. Espera un momento y vuelve a probar.';
+  if (m.includes('captcha')) return 'No pudimos comprobar que no eres un robot. Intenta de nuevo.';
+  if (m.includes('invalid email') || m.includes('unable to validate email')) return 'Ese correo no es válido.';
   if (m.includes('fetch') || m.includes('network')) return 'Sin conexión. Revisa tu internet.';
   return 'Ocurrió un error. Intenta de nuevo.';
 }

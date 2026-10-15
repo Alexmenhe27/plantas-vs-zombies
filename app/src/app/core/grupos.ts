@@ -1,4 +1,4 @@
-import { Especie } from './modelos';
+import { Especie, EstadoObservacion } from './modelos';
 
 /** Grupos de la app, en el orden del diseño (6 grupos de animales + plantas). */
 export interface Grupo {
@@ -33,6 +33,19 @@ export function iconoEspecie(e: Pick<Especie, 'reino' | 'grupo'>): string {
   return ICONOS_ANIMAL.has(e.grupo) ? `grupo-${e.grupo}` : 'grupo-insecto';
 }
 
+/** Color del grupo (variables --g-* del sistema de diseño). */
+export function colorGrupo(e: Pick<Especie, 'reino' | 'grupo'> | null | undefined): string {
+  if (!e) return 'planta';
+  if (e.reino === 'planta') return 'planta';
+  return ICONOS_ANIMAL.has(e.grupo) ? e.grupo : 'invertebrado';
+}
+
+/** Estilo para pintar algo con el color del grupo: [style]="estiloGrupo(e)". */
+export function estiloGrupo(e: Pick<Especie, 'reino' | 'grupo'> | null | undefined): Record<string, string> {
+  const c = colorGrupo(e);
+  return { '--grupo': `var(--g-${c})`, '--grupo-suave': `var(--g-${c}-suave)` };
+}
+
 export function nombreGrupo(grupo: string): string {
   return NOMBRE_GRUPO[grupo] ?? grupo.charAt(0).toUpperCase() + grupo.slice(1);
 }
@@ -60,4 +73,35 @@ export function nivelConfianza(c: number | null | undefined): string {
 
 export function porcentaje(c: number | null | undefined): string {
   return c == null ? '' : `${Math.round(c * 100)} %`;
+}
+
+const ESTADOS: Record<EstadoObservacion, string> = {
+  identificada: 'Identificada',
+  revisar: 'En revisión',
+  elegida: 'Elegida por ti',
+  corregida: 'Revisada por un experto',
+  no_identificada: 'Sin identificar',
+};
+
+export function nombreEstado(estado: EstadoObservacion): string {
+  return ESTADOS[estado] ?? estado;
+}
+
+/** Colores de cada grupo para el mapa (MapLibre no entiende variables CSS): [modo claro, modo oscuro]. */
+export const COLOR_GRUPO_MAPA: Record<string, [string, string]> = {
+  ave: ['#3a76b3', '#7fb2e6'],
+  mamifero: ['#a3653a', '#dca27a'],
+  reptil: ['#6b8732', '#a9c46b'],
+  anfibio: ['#1d9584', '#5fd0c0'],
+  insecto: ['#c9721c', '#f0a75a'],
+  pez: ['#2a62a6', '#7aa8e3'],
+  planta: ['#3b8a4d', '#7cc58a'],
+  invertebrado: ['#8458b8', '#bf9ae8'],
+};
+
+const GRUPOS_PLANTA = new Set(['arbol', 'arbusto', 'cactacea', 'agave', 'flor', 'palma', 'helecho', 'planta']);
+
+/** Reino de un grupo de la app (para especies parecidas que todavía no están en el catálogo). */
+export function reinoDeGrupo(grupo: string | null | undefined): 'animal' | 'planta' {
+  return grupo && GRUPOS_PLANTA.has(grupo) ? 'planta' : 'animal';
 }

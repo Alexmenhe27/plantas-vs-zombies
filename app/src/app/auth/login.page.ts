@@ -1,33 +1,42 @@
 import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
-import { IonContent, IonIcon } from '@ionic/angular';
+import { IonContent, IonIcon, IonSpinner, NavController } from '@ionic/angular';
 import { SupabaseService } from '../core/supabase.service';
+import { MarcaComponent } from '../shared/marca.component';
 import { ESTILOS_ACCESO } from './auth.styles';
 
 @Component({
   selector: 'app-login',
-  imports: [IonContent, IonIcon, FormsModule, RouterLink],
+  imports: [FormsModule, IonContent, IonIcon, IonSpinner, MarcaComponent, RouterLink],
   template: `
     <ion-content>
       <header class="cabecera">
-        <div class="marca"><ion-icon name="leaf-outline" /></div>
-        <h1>Descubre la vida silvestre que te rodea</h1>
-        <p>Inicia sesión para identificar especies y guardar tus observaciones.</p>
+        <div class="arriba">
+          <button class="volver" type="button" aria-label="Volver" (click)="volver()"><ion-icon name="arrow-back" /></button>
+          <app-marca [tamano]="38" />
+        </div>
+        <h1>Qué gusto verte</h1>
+        <p>Inicia sesión para seguir con tu colección.</p>
       </header>
       <form (ngSubmit)="entrar()">
-        <label>Correo electrónico
-          <input type="email" name="email" autocomplete="email" required [(ngModel)]="email" />
+        <label class="campo">Correo electrónico
+          <input type="email" name="email" autocomplete="email" inputmode="email" required [(ngModel)]="email" />
         </label>
-        <label>Contraseña
-          <input type="password" name="password" autocomplete="current-password" required [(ngModel)]="password" />
+        <label class="campo clave">Contraseña
+          <input [type]="verClave() ? 'text' : 'password'" name="password" autocomplete="current-password" required [(ngModel)]="password" />
+          <button class="ver" type="button" [attr.aria-label]="verClave() ? 'Ocultar contraseña' : 'Mostrar contraseña'" (click)="verClave.set(!verClave())">
+            <ion-icon [name]="verClave() ? 'eye-off-outline' : 'eye-outline'" />
+          </button>
         </label>
-        @if (error()) { <p class="error" role="alert">{{ error() }}</p> }
-        <button class="boton" type="submit" [disabled]="cargando()">{{ cargando() ? 'Entrando…' : 'Iniciar sesión' }}</button>
+        @if (error()) { <p class="error-formulario" role="alert">{{ error() }}</p> }
+        <button class="boton" type="submit" [disabled]="cargando()">
+          @if (cargando()) { <ion-spinner name="crescent" /> } Iniciar sesión
+        </button>
+        <a class="boton fantasma" routerLink="/recuperar">¿Olvidaste tu contraseña?</a>
       </form>
       <div class="enlaces">
-        <a routerLink="/recuperar">¿Olvidaste tu contraseña?</a>
-        <span class="texto-suave">¿No tienes cuenta? <a routerLink="/registro">Regístrate</a></span>
+        <span>¿No tienes cuenta? <a routerLink="/registro">Regístrate gratis</a></span>
       </div>
     </ion-content>
   `,
@@ -37,10 +46,16 @@ import { ESTILOS_ACCESO } from './auth.styles';
 export class LoginPage {
   private readonly sb = inject(SupabaseService);
   private readonly router = inject(Router);
+  private readonly nav = inject(NavController);
   email = '';
   password = '';
   readonly cargando = signal(false);
   readonly error = signal('');
+  readonly verClave = signal(false);
+
+  volver(): void {
+    this.nav.navigateBack('/bienvenida');
+  }
 
   async entrar(): Promise<void> {
     if (!this.email || !this.password) {
@@ -51,7 +66,7 @@ export class LoginPage {
     this.error.set('');
     try {
       await this.sb.iniciarSesion(this.email.trim(), this.password);
-      await this.router.navigateByUrl('/app/identificar', { replaceUrl: true });
+      await this.router.navigateByUrl('/app/inicio', { replaceUrl: true });
     } catch (e) {
       this.error.set((e as Error).message);
     } finally {

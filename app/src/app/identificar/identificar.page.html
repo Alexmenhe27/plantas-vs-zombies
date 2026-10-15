@@ -1,0 +1,86 @@
+<ion-content>
+  <app-foto-analisis [src]="id.foto()?.vistaPrevia ?? null" [fase]="fasePantalla()" [exito]="exito()">
+    <div barra class="barra">
+      <button class="boton-icono vidrio" type="button" aria-label="Cerrar" (click)="cerrar()"><ion-icon name="close" /></button>
+      @if (observacion() && id.fase() === 'listo') {
+        <button class="boton-icono vidrio" type="button" aria-label="Compartir" (click)="compartir()"><ion-icon name="share-social-outline" /></button>
+      }
+    </div>
+  </app-foto-analisis>
+
+  @switch (id.fase()) {
+    @case ('error') {
+      @let e = id.error();
+      <section class="estado aparece">
+        @if (e?.codigo === 'limite_diario') {
+          <div class="icono-estado acento"><ion-icon name="hourglass-outline" /></div>
+          <h1>Llegaste al límite de hoy</h1>
+          <p>{{ e?.message }}</p>
+          @if (esperar()) { <p class="aviso acento"><ion-icon name="time-outline" /><span>Podrás identificar de nuevo en {{ esperar() }}</span></p> }
+          <div class="acciones">
+            @if (e?.invitado) { <a class="boton" routerLink="/app/perfil" [queryParams]="{ crear: 1 }"><ion-icon name="person-add-outline" />Crear mi cuenta gratis</a> }
+            <button class="boton secundario" type="button" (click)="id.guardarParaDespues()"><ion-icon name="cloud-upload-outline" />Identificarla cuando se libere</button>
+            <a class="boton fantasma" routerLink="/app/explorar" (click)="id.limpiar()">Explorar el catálogo mientras tanto</a>
+          </div>
+        } @else {
+          <div class="icono-estado"><ion-icon [name]="e?.codigo === 'servidor_inaccesible' || e?.codigo === 'sin_conexion' ? 'cloud-offline-outline' : 'warning-outline'" /></div>
+          <h1>{{ e?.codigo === 'servidor_inaccesible' ? 'No pudimos conectar con el servidor' : e?.codigo === 'subida_fallida' ? 'No pudimos guardar tu foto' : 'No pudimos identificar la foto' }}</h1>
+          <p>{{ e?.message || 'El servicio de identificación no responde. Intenta en un momento.' }}</p>
+          <div class="acciones">
+            <button class="boton" type="button" (click)="id.reintentar()"><ion-icon name="refresh-outline" />Reintentar</button>
+            @if (id.sePuedeEsperar()) {
+              <button class="boton secundario" type="button" (click)="id.guardarParaDespues()"><ion-icon name="cloud-upload-outline" />Guardar e identificar después</button>
+            }
+            <button class="boton fantasma" type="button" (click)="id.descartar()">Descartar foto</button>
+          </div>
+        }
+      </section>
+    }
+
+    @case ('en_espera') {
+      <section class="estado aparece">
+        <div class="icono-estado"><ion-icon name="cloud-upload-outline" /></div>
+        <span class="chip neutro">Guardada en tu teléfono</span>
+        <h1>La identificaremos en cuanto se pueda</h1>
+        <p>Tu foto quedó en espera. Se identificará sola cuando vuelva la conexión (o se libere tu cupo) y el resultado aparecerá en tu colección.</p>
+        <div class="acciones">
+          <button class="boton" type="button" (click)="otra()"><ion-icon name="tab-identificar" />Tomar otra foto</button>
+          <button class="boton secundario" type="button" (click)="cerrar()">Volver al inicio</button>
+        </div>
+      </section>
+    }
+
+    @default {
+      <app-resultado
+        [parcial]="id.parcial()"
+        [observacion]="observacion()"
+        [candidatosEspecies]="id.resultado()?.candidatos_especies ?? []"
+        [fichaPendiente]="id.resultado()?.ficha_pendiente ?? false"
+        [puedeElegir]="true"
+        [eligiendo]="id.eligiendo()"
+        (elegir)="id.elegir($event)">
+        @if (observacion(); as o) {
+          <div class="acciones-finales aparece">
+            @if (o.estado !== 'no_identificada' && o.especie && o.estado !== 'revisar') {
+              <label class="fila-ajuste">
+                <span>Publicar avistamiento<small>Otras personas lo verán en la ficha de la especie, con ubicación aproximada.</small></span>
+                <ion-toggle [checked]="o.es_publica" (ionChange)="cambiarPublica($event)" aria-label="Publicar avistamiento" />
+              </label>
+            }
+            <div class="dos">
+              <button class="boton" type="button" (click)="otra()" [disabled]="id.ocupado()">
+                @if (id.ocupado()) { <ion-spinner name="crescent" /> } @else { <ion-icon name="tab-identificar" /> }
+                {{ o.estado === 'no_identificada' ? 'Tomar otra' : 'Identificar otra' }}
+              </button>
+              @if (o.especie && o.estado !== 'revisar') {
+                <a class="boton secundario" [routerLink]="['/especie', o.especie.id]">Ver ficha</a>
+              } @else {
+                <a class="boton secundario" [routerLink]="['/observacion', o.id]">Ver detalle</a>
+              }
+            </div>
+          </div>
+        }
+      </app-resultado>
+    }
+  }
+</ion-content>

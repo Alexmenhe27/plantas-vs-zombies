@@ -1,11 +1,17 @@
 import { Injectable, inject } from '@angular/core';
-import { Camera, CameraResultType, CameraSource } from '@capacitor/camera';
+import { Camera, CameraDirection, CameraResultType, CameraSource } from '@capacitor/camera';
 import { SupabaseService } from './supabase.service';
 
 export const BUCKET = 'fotos';
 const LADO_MAXIMO = 1024; // suficiente para identificar; la foto pesa ~4 veces menos que a 1600 px
+const LADO_MINIATURA = 320; // para listas y tarjetas: ~15 KB en vez de ~200 KB
 
-/** Cámara/galería, compresión (quita EXIF) y subida al bucket privado. */
+/** Ruta de la miniatura de una foto: <usuario>/<id>.mini.jpg */
+export function rutaMini(ruta: string): string {
+  return ruta.replace(/\.jpg$/, '.mini.jpg');
+}
+
+/** Cámara/galería, compresión (quita EXIF), miniaturas y subida al bucket privado. */
 @Injectable({ providedIn: 'root' })
 export class FotosService {
   private readonly sb = inject(SupabaseService);
@@ -19,6 +25,9 @@ export class FotosService {
         resultType: CameraResultType.Uri,
         quality: 85,
         correctOrientation: true,
+        // En el navegador del teléfono abre directo la cámara trasera (sin la pantalla intermedia de PWA Elements).
+        webUseInput: true,
+        direction: CameraDirection.Rear,
         promptLabelHeader: 'Foto',
         promptLabelPhoto: 'Elegir de la galería',
         promptLabelPicture: 'Tomar foto',
@@ -34,17 +43,12 @@ export class FotosService {
   }
 
   /** Redimensiona a 1024 px y re-codifica en JPEG; al pasar por canvas se pierden los metadatos EXIF (incluido el GPS). */
-  async comprimir(original: Blob): Promise<Blob> {
-    const bitmap = await createImageBitmap(original);
-    const escala = Math.min(1, LADO_MAXIMO / Math.max(bitmap.width, bitmap.height));
-    const canvas = document.createElement('canvas');
-    canvas.width = Math.round(bitmap.width * escala);
-    canvas.height = Math.round(bitmap.height * escala);
-    canvas.getContext('2d')!.drawImage(bitmap, 0, 0, canvas.width, canvas.height);
-    bitmap.close();
-    return await new Promise<Blob>((ok, mal) =>
-      canvas.toBlob((b) => (b ? ok(b) : mal(new Error('No se pudo procesar la foto'))), 'image/jpeg', 0.8),
-    );
+  comprimir(original: Blob): Promise<Blob> {
+    return redimensionar(original, LADO_MAXIMO, 0.8);
+  }
+
+  miniatura(foto: Blob): Promise<Blob> {
+    return redimensionar(foto, LADO_MINIATURA, 0.72);
   }
 
   /** Sube la foto a fotos/<usuario_id>/<uuid>.jpg y devuelve la ruta. */
@@ -57,18 +61,28 @@ export class FotosService {
     return ruta;
   }
 
+  /** Sube la miniatura después de la foto (no retrasa la identificación). Si falla, las listas usan la foto completa. */
+  async subirMiniatura(ruta: string, foto: Blob): Promise<void> {
+    try {
+      const mini = await this.miniatura(foto);
+      await this.sb.client.storage.from(BUCKET).upload(rutaMini(ruta), mini, { contentType: 'image/jpeg', upsert: false });
+    } catch {
+      // Sin miniatura no pasa nada.
+    }
+  }
+
   /** Enlaces temporales (1 hora) para mostrar fotos privadas; se guardan en memoria. */
   async urlsFirmadas(rutas: string[]): Promise<Record<string, string>> {
     const ahora = Date.now();
     const resultado: Record<string, string> = {};
     const faltan: string[] = [];
-    for (const r of new Set(rutas)) {
+    for (const r of new Set(rutas.filter(Boolean))) {
       const c = this.urls.get(r);
       if (c && c.vence > ahora) resultado[r] = c.url;
       else faltan.push(r);
     }
-    if (faltan.length) {
-      const { data } = await this.sb.client.storage.from(BUCKET).createSignedUrls(faltan, 3600);
+    for (let i = 0; i < faltan.length; i += 100) {
+      const { data } = await this.sb.client.storage.from(BUCKET).createSignedUrls(faltan.slice(i, i + 100), 3600);
       for (const d of data ?? []) {
         if (d.signedUrl && d.path) {
           resultado[d.path] = d.signedUrl;
@@ -79,10 +93,30 @@ export class FotosService {
     return resultado;
   }
 
-  async borrar(ruta: string): Promise<void> {
-    await this.sb.client.storage.from(BUCKET).remove([ruta]);
-    this.urls.delete(ruta);
+  /** Enlaces de la miniatura y de la foto completa (la miniatura puede no existir en fotos anteriores). */
+  async urlsConMiniatura(rutas: string[]): Promise<Record<string, { mini: string | null; completa: string | null }>> {
+    const urls = await this.urlsFirmadas(rutas.flatMap((r) => [r, rutaMini(r)]));
+    return Object.fromEntries(rutas.map((r) => [r, { mini: urls[rutaMini(r)] ?? null, completa: urls[r] ?? null }]));
   }
+
+  async borrar(ruta: string): Promise<void> {
+    await this.sb.client.storage.from(BUCKET).remove([ruta, rutaMini(ruta)]);
+    this.urls.delete(ruta);
+    this.urls.delete(rutaMini(ruta));
+  }
+}
+
+async function redimensionar(original: Blob, lado: number, calidad: number): Promise<Blob> {
+  const bitmap = await createImageBitmap(original);
+  const escala = Math.min(1, lado / Math.max(bitmap.width, bitmap.height));
+  const canvas = document.createElement('canvas');
+  canvas.width = Math.round(bitmap.width * escala);
+  canvas.height = Math.round(bitmap.height * escala);
+  canvas.getContext('2d')!.drawImage(bitmap, 0, 0, canvas.width, canvas.height);
+  bitmap.close();
+  return await new Promise<Blob>((ok, mal) =>
+    canvas.toBlob((b) => (b ? ok(b) : mal(new Error('No se pudo procesar la foto'))), 'image/jpeg', calidad),
+  );
 }
 
 /** crypto.randomUUID solo existe en https o localhost; al abrir la app desde el cel por la red local (http) no está. */

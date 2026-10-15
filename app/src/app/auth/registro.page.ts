@@ -1,41 +1,51 @@
 import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
-import { IonContent, IonIcon } from '@ionic/angular';
+import { IonContent, IonIcon, IonSpinner, NavController } from '@ionic/angular';
 import { SupabaseService } from '../core/supabase.service';
+import { MarcaComponent } from '../shared/marca.component';
 import { ESTILOS_ACCESO } from './auth.styles';
 
 @Component({
   selector: 'app-registro',
-  imports: [IonContent, IonIcon, FormsModule, RouterLink],
+  imports: [FormsModule, IonContent, IonIcon, IonSpinner, MarcaComponent, RouterLink],
   template: `
     <ion-content>
       <header class="cabecera">
-        <div class="marca"><ion-icon name="leaf-outline" /></div>
+        <div class="arriba">
+          <button class="volver" type="button" aria-label="Volver" (click)="volver()"><ion-icon name="arrow-back" /></button>
+          <app-marca [tamano]="38" />
+        </div>
         <h1>Crea tu cuenta</h1>
-        <p>Identifica hasta 10 especies al día y guarda tu historial.</p>
+        <p>Es gratis. Guarda tu colección y ten más identificaciones al día.</p>
       </header>
       @if (confirmar()) {
-        <form>
-          <p class="ok" role="status">Te enviamos un correo a {{ email }}. Abre el enlace para confirmar tu cuenta y después inicia sesión.</p>
+        <div class="tarjeta-acceso">
+          <p class="ok-formulario">Te enviamos un correo a <strong>{{ email }}</strong>. Abre el enlace para confirmar tu cuenta y luego inicia sesión.</p>
           <a class="boton" routerLink="/entrar">Ir a iniciar sesión</a>
-        </form>
+        </div>
       } @else {
         <form (ngSubmit)="registrar()">
-          <label>Nombre de usuario
-            <input name="username" autocomplete="username" required minlength="3" maxlength="30" [(ngModel)]="username" />
+          <label class="campo">Nombre de usuario
+            <input name="username" autocomplete="username" required maxlength="30" [(ngModel)]="username" />
+            <small>Es el que verán los demás en tus avistamientos públicos.</small>
           </label>
-          <label>Correo electrónico
-            <input type="email" name="email" autocomplete="email" required [(ngModel)]="email" />
+          <label class="campo">Correo electrónico
+            <input type="email" name="email" autocomplete="email" inputmode="email" required [(ngModel)]="email" />
           </label>
-          <label>Contraseña (mínimo 6 caracteres)
-            <input type="password" name="password" autocomplete="new-password" required minlength="6" [(ngModel)]="password" />
+          <label class="campo clave">Contraseña (mínimo 6 caracteres)
+            <input [type]="verClave() ? 'text' : 'password'" name="password" autocomplete="new-password" required minlength="6" [(ngModel)]="password" />
+            <button class="ver" type="button" [attr.aria-label]="verClave() ? 'Ocultar contraseña' : 'Mostrar contraseña'" (click)="verClave.set(!verClave())">
+              <ion-icon [name]="verClave() ? 'eye-off-outline' : 'eye-outline'" />
+            </button>
           </label>
-          @if (error()) { <p class="error" role="alert">{{ error() }}</p> }
-          <button class="boton" type="submit" [disabled]="cargando()">{{ cargando() ? 'Creando cuenta…' : 'Crear cuenta' }}</button>
+          @if (error()) { <p class="error-formulario" role="alert">{{ error() }}</p> }
+          <button class="boton" type="submit" [disabled]="cargando()">
+            @if (cargando()) { <ion-spinner name="crescent" /> } Crear cuenta
+          </button>
         </form>
       }
-      <div class="enlaces"><span class="texto-suave">¿Ya tienes cuenta? <a routerLink="/entrar">Inicia sesión</a></span></div>
+      <div class="enlaces"><span>¿Ya tienes cuenta? <a routerLink="/entrar">Inicia sesión</a></span></div>
     </ion-content>
   `,
   styles: ESTILOS_ACCESO,
@@ -44,12 +54,18 @@ import { ESTILOS_ACCESO } from './auth.styles';
 export class RegistroPage {
   private readonly sb = inject(SupabaseService);
   private readonly router = inject(Router);
+  private readonly nav = inject(NavController);
   username = '';
   email = '';
   password = '';
   readonly cargando = signal(false);
   readonly error = signal('');
   readonly confirmar = signal(false);
+  readonly verClave = signal(false);
+
+  volver(): void {
+    this.nav.navigateBack('/bienvenida');
+  }
 
   async registrar(): Promise<void> {
     const username = this.username.trim();
@@ -57,7 +73,7 @@ export class RegistroPage {
       this.error.set('El nombre de usuario debe tener de 3 a 30 letras, números, punto o guion bajo.');
       return;
     }
-    if (!this.email.includes('@')) {
+    if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(this.email.trim())) {
       this.error.set('Escribe un correo válido.');
       return;
     }
@@ -70,7 +86,7 @@ export class RegistroPage {
     try {
       const debeConfirmar = await this.sb.registrarse(this.email.trim(), this.password, username);
       if (debeConfirmar) this.confirmar.set(true);
-      else await this.router.navigateByUrl('/app/identificar', { replaceUrl: true });
+      else await this.router.navigateByUrl('/app/inicio', { replaceUrl: true });
     } catch (e) {
       this.error.set((e as Error).message);
     } finally {

@@ -1,4 +1,5 @@
 """Configuración leída de variables de entorno (ver .env.example)."""
+import hashlib
 import os
 from dataclasses import dataclass, field
 
@@ -8,41 +9,57 @@ def _env_file() -> None:
     path = os.path.join(os.path.dirname(os.path.dirname(__file__)), ".env")
     if not os.path.exists(path):
         return
-    with open(path, encoding="utf-8") as fh:
+    # utf-8-sig: el Bloc de notas de Windows a veces guarda el archivo con BOM al inicio.
+    with open(path, encoding="utf-8-sig") as fh:
         for line in fh:
             line = line.strip()
             if not line or line.startswith("#") or "=" not in line:
                 continue
             key, value = line.split("=", 1)
-            os.environ.setdefault(key.strip(), value.strip())
+            # Se quitan comillas puestas por error alrededor del valor ("clave" o 'clave').
+            os.environ.setdefault(key.strip(), value.strip().strip('"').strip("'").strip())
 
 
 _env_file()
+
+MODELO_POR_DEFECTO = "claude-haiku-5-5"
+
+
+def _modelo(valor: str) -> str:
+    valor = valor.strip()
+    return valor if valor.startswith("claude") else MODELO_POR_DEFECTO
+
+
+def _razonamiento(valor: str) -> str:
+    valor = valor.strip().lower()
+    return valor if valor in ("bajo", "sin") else "bajo"
 
 
 @dataclass(frozen=True)
 class Settings:
     supabase_url: str = field(default_factory=lambda: os.environ.get("SUPABASE_URL", "").rstrip("/"))
     supabase_service_key: str = field(default_factory=lambda: os.environ.get("SUPABASE_SERVICE_KEY", ""))
-    gemini_api_key: str = field(default_factory=lambda: os.environ.get("GEMINI_API_KEY", ""))
-    ia_modelo: str = field(default_factory=lambda: os.environ.get("IA_MODELO", "gemini-flash-latest"))
-    # Si IA_MODELO no existe, no tiene cuota, falla o tarda demasiado, se prueban estos en orden.
-    # Los alias "-latest" los mantiene Google apuntando al modelo vigente, así no se quedan viejos.
-    ia_modelos_respaldo: list[str] = field(
-        default_factory=lambda: [
-            m.strip()
-            for m in os.environ.get("IA_MODELOS_RESPALDO", "gemini-flash-latest,gemini-flash-lite-latest,gemini-2.5-flash").split(",")
-            if m.strip()
-        ]
-    )
-    # Segundos máximos de espera a un modelo de Gemini, y en total contando los de respaldo.
-    ia_tiempo_maximo: float = field(default_factory=lambda: float(os.environ.get("IA_TIEMPO_MAXIMO", "40")))
-    ia_tiempo_total: float = field(default_factory=lambda: float(os.environ.get("IA_TIEMPO_TOTAL", "110")))
-    ia_url: str = field(default_factory=lambda: os.environ.get("IA_URL", "https://generativelanguage.googleapis.com").rstrip("/"))
-    limite_diario: int = field(default_factory=lambda: int(os.environ.get("LIMITE_DIARIO", "10")))
+    anthropic_api_key: str = field(default_factory=lambda: os.environ.get("ANTHROPIC_API_KEY", ""))
+    # Solo si tu clave es de ámbito "Organización": el ID del espacio de trabajo (wrkspc_...) al que se cobra.
+    anthropic_workspace_id: str = field(default_factory=lambda: os.environ.get("ANTHROPIC_WORKSPACE_ID", "").strip())
+    # Si quedó un modelo de otra IA (por ejemplo gemini-...), se usa el de Claude por defecto.
+    ia_modelo: str = field(default_factory=lambda: _modelo(os.environ.get("IA_MODELO", "")))
+    # "bajo" (recomendado): Claude razona un poco antes de responder.
+    # "sin": responde sin razonar: casi el doble de rápido, pero en la evaluación del 14/10/2026 acertó bastante menos
+    # (ver api/scripts/evaluar_ia.py y CAMBIOS.md), así que no se usa por defecto.
+    ia_razonamiento: str = field(default_factory=lambda: _razonamiento(os.environ.get("IA_RAZONAMIENTO", "")))
+    # Segundos máximos de espera entre un trozo y otro de la respuesta de Claude, y en total.
+    ia_tiempo_maximo: float = field(default_factory=lambda: float(os.environ.get("IA_TIEMPO_MAXIMO", "30")))
+    ia_tiempo_total: float = field(default_factory=lambda: float(os.environ.get("IA_TIEMPO_TOTAL", "60")))
+    # Solo para pruebas: dirección de un servidor falso de Claude.
+    ia_url: str = field(default_factory=lambda: os.environ.get("IA_URL", "").strip().rstrip("/") or "https://api.anthropic.com")
+    # GBIF valida cada especie nueva (gratis, sin clave). Vacío = no validar (solo para pruebas sin internet).
+    gbif_url: str = field(default_factory=lambda: os.environ.get("GBIF_URL", "https://api.gbif.org/v1").strip().rstrip("/"))
+    gbif_tiempo_maximo: float = field(default_factory=lambda: float(os.environ.get("GBIF_TIEMPO_MAXIMO", "3")))
     # Por debajo de esta confianza la especie no se agrega al catálogo (queda "en revisión").
     confianza_para_catalogo: float = field(default_factory=lambda: float(os.environ.get("CONFIANZA_PARA_CATALOGO", "0.5")))
     confianza_minima: float = field(default_factory=lambda: float(os.environ.get("CONFIANZA_MINIMA", "0.7")))
+    # Nota: el límite diario ya no se configura aquí; vive en la tabla "ajustes" de Supabase (ver COMO_EJECUTAR.md).
     cors_origins: list[str] = field(
         default_factory=lambda: [
             o.strip()
@@ -61,6 +78,8 @@ class Settings:
         )
         or None
     )
+    # En producción oculta a la persona los detalles técnicos de los errores (siguen en la terminal de la API).
+    produccion: bool = field(default_factory=lambda: os.environ.get("PRODUCCION", "").strip().lower() in ("1", "si", "sí", "true"))
 
     def faltantes(self) -> list[str]:
         """Variables obligatorias que no están configuradas."""
@@ -69,9 +88,13 @@ class Settings:
             faltan.append("SUPABASE_URL")
         if not self.supabase_service_key:
             faltan.append("SUPABASE_SERVICE_KEY")
-        if not self.gemini_api_key:
-            faltan.append("GEMINI_API_KEY")
+        if not self.anthropic_api_key:
+            faltan.append("ANTHROPIC_API_KEY")
         return faltan
+
+    def sal(self) -> bytes:
+        """Sal para la huella anónima de la red de los invitados (derivada de la clave secreta: no hace falta otra variable)."""
+        return hashlib.sha256(("sal-red:" + self.supabase_service_key).encode()).digest()
 
 
 settings = Settings()

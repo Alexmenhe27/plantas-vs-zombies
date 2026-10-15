@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">Fauna y Flora</string>
+    <string name="title_activity_main">Fauna y Flora</string>
+    <string name="package_name">mx.faunayflora.app</string>
+    <string name="custom_url_scheme">mx.faunayflora.app</string>
+</resources>

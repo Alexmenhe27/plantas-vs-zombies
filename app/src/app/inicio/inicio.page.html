@@ -1,0 +1,124 @@
+<ion-content>
+  <ion-refresher slot="fixed" (ionRefresh)="cargar($event)"><ion-refresher-content /></ion-refresher>
+
+  <header class="hero">
+    <div class="fila">
+      <div class="hola">
+        <span>{{ saludo }}</span>
+        <h1>{{ nombre() ? 'Hola, ' + nombre() : (sb.esInvitado() ? 'Hola, explorador' : 'Hola') }}</h1>
+      </div>
+      <a class="avatar" routerLink="/app/perfil" aria-label="Tu perfil">{{ sb.esInvitado() ? '?' : inicial() }}</a>
+    </div>
+
+    <div class="cta">
+      <h2>¿Qué encontraste hoy?</h2>
+      <p>Toma una foto de un animal o una planta y te decimos qué especie es.</p>
+      <div class="botones">
+        <button class="boton acento" type="button" (click)="identificacion.empezar('camara')" [disabled]="identificacion.ocupado()">
+          @if (identificacion.ocupado()) { <ion-spinner name="crescent" /> } @else { <ion-icon name="tab-identificar" /> }
+          Tomar foto
+        </button>
+        <button class="boton vidrio" type="button" (click)="identificacion.empezar('galeria')" [disabled]="identificacion.ocupado()">
+          <ion-icon name="images-outline" />Galería
+        </button>
+      </div>
+      @if (cupo(); as c) {
+        @if (c.sin_limite) {
+          <div class="cupo"><div class="fila"><span>Identificaciones de hoy</span><strong>Sin límite</strong></div></div>
+        } @else {
+        <div class="cupo" [class.agotado]="c.restantes === 0">
+          <div class="fila"><span>Identificaciones de hoy</span><strong>{{ c.restantes }} de {{ c.limite }}</strong></div>
+          <div class="barra-progreso" role="progressbar" [attr.aria-valuenow]="usadoPct()" aria-valuemin="0" aria-valuemax="100"
+               [attr.aria-label]="'Te quedan ' + c.restantes + ' de ' + c.limite">
+            <div [style.width.%]="100 - usadoPct()"></div>
+          </div>
+          @if (c.restantes === 0 && esperar()) { <small>Podrás identificar de nuevo en {{ esperar() }}.</small> }
+        </div>
+        }
+      }
+    </div>
+  </header>
+
+  <div class="contenido">
+    @if (sb.esInvitado()) {
+      <a class="aviso acento invitado" routerLink="/app/perfil" [queryParams]="{ crear: 1 }">
+        <ion-icon name="person-add-outline" />
+        <p><strong>Estás usando la app sin cuenta</strong>Crea tu cuenta gratis para no perder tu colección y tener más identificaciones al día.</p>
+        <ion-icon name="chevron-forward" class="flecha" />
+      </a>
+    }
+
+    @if (pendientes.lista().length) {
+      <section class="seccion tarjeta pendientes">
+        <div class="seccion-cabecera">
+          <h2><ion-icon name="cloud-upload-outline" />En espera</h2>
+          @if (pendientes.procesando()) { <ion-spinner name="dots" /> }
+        </div>
+        <p class="texto-2">Estas fotos se identificarán solas en cuanto haya conexión.</p>
+        <div class="fila-pendientes">
+          @for (p of pendientes.lista(); track p.id) {
+            <figure>
+              <img [src]="p.vistaPrevia" alt="Foto en espera" />
+              <button type="button" class="quitar" aria-label="Descartar foto en espera" (click)="pendientes.quitar(p.id)"><ion-icon name="close" /></button>
+              @if (p.aviso) { <figcaption>{{ p.aviso }}</figcaption> }
+            </figure>
+          }
+        </div>
+        <button class="boton suave pequeno" type="button" (click)="pendientes.procesar()" [disabled]="pendientes.procesando()">
+          <ion-icon name="refresh-outline" />Intentar ahora
+        </button>
+      </section>
+    }
+
+    <section class="seccion">
+      <div class="seccion-cabecera">
+        <h2>Tus descubrimientos</h2>
+        @if (recientes()?.length) { <a routerLink="/app/coleccion">Ver colección</a> }
+      </div>
+      @if (recientes() === null) {
+        <div class="carrusel">
+          @for (i of [1, 2, 3]; track i) { <span class="esqueleto tarjeta-vacia"></span> }
+        </div>
+      } @else if (recientes()!.length) {
+        <div class="carrusel">
+          @for (o of recientes(); track o.id) {
+            <a class="reciente" [routerLink]="['/observacion', o.id]" [style]="estiloGrupo(o.especie)">
+              <app-foto class="mini" [src]="urls()[o.ruta_foto]?.mini" [respaldo]="urls()[o.ruta_foto]?.completa" [alt]="nombreDe(o)"
+                        [icono]="o.especie ? iconoEspecie(o.especie) : 'image-outline'" />
+              <span class="nombre">{{ nombreDe(o) }}</span>
+              <span class="fecha">{{ fechaCorta(o.observada_en) }}</span>
+            </a>
+          }
+        </div>
+      } @else {
+        <div class="primera tarjeta">
+          <div class="icono-vacio"><ion-icon name="leaf-outline" /></div>
+          <div>
+            <strong>Tu colección empieza con una foto</strong>
+            <p>Cada especie que identifiques se guarda aquí, con la fecha y el lugar.</p>
+          </div>
+        </div>
+      }
+    </section>
+
+    <section class="seccion">
+      <div class="seccion-cabecera"><h2>Explora por grupo</h2><a routerLink="/app/explorar">Todo el catálogo</a></div>
+      <div class="grupos">
+        @for (g of grupos; track g.id) {
+          <a [routerLink]="['/app/explorar']" [queryParams]="{ grupo: g.id }" [style]="estiloGrupo({ reino: g.id === 'planta' ? 'planta' : 'animal', grupo: g.id })">
+            <span class="icono"><ion-icon [name]="g.icono" /></span>{{ g.nombre }}
+          </a>
+        }
+      </div>
+    </section>
+
+    <section class="seccion tarjeta consejos">
+      <h2>Para una buena foto</h2>
+      <ul>
+        <li><ion-icon name="scan-outline" /><span><strong>De cerca y al centro.</strong> Que el animal o la planta ocupe buena parte de la foto.</span></li>
+        <li><ion-icon name="sunny-outline" /><span><strong>Con luz.</strong> Evita el sol de frente y las sombras fuertes.</span></li>
+        <li><ion-icon name="flower-outline" /><span><strong>Los detalles cuentan.</strong> Hojas, flores, alas o manchas ayudan a distinguir especies parecidas.</span></li>
+      </ul>
+    </section>
+  </div>
+</ion-content>

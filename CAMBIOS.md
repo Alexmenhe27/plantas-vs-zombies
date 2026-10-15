@@ -1,3 +1,160 @@
+# Cambios del 14 de octubre de 2026: más rápida, más segura y con interfaz nueva
+
+## Antes de usarla: 3 pasos que te tocan a ti (5 minutos)
+
+1. **Aplica la migración nueva en Supabase.** Abre tu proyecto → *SQL Editor* → *New query*, pega todo el archivo
+   `supabase/migrations/20261014000005_rendimiento_seguridad_privacidad.sql` y pulsa *Run*. No borra datos de nadie
+   (solo el esquema temporal `tmp_imagenes`, que sobró de la carga de fotos del catálogo y ya está en `seed_imagenes.sql`).
+   Yo no pude aplicarla: el permiso para cambiar tu base de datos en la nube fue rechazado las dos veces que lo intenté,
+   así que todo se probó en una copia local con las mismas migraciones.
+   **Sin este paso la API nueva no puede identificar** (le faltan las funciones nuevas); `python -m scripts.diagnostico` te lo avisa.
+2. **Activa "entrar sin cuenta"** (modo invitado): *Authentication → Sign In / Providers → Allow anonymous sign-ins* → activar.
+   Sin esto, el botón "Empezar sin cuenta" muestra un aviso y te lleva a crear una cuenta.
+3. **En *Authentication → URL Configuration → Redirect URLs*** agrega `http://localhost:4200/**` si no está (el correo que confirma
+   la cuenta de un invitado lleva a `/nueva-contrasena` para elegir su contraseña).
+
+Opcional: hazte administrador para usar el panel de revisión (ver COMO_EJECUTAR.md).
+
+## Velocidad: de ~10 s a ~4 s, con el nombre visible a los ~3 s
+
+Medido con Claude y GBIF reales (5 fotos, base de datos local; con Supabase en la nube súmale unas décimas):
+
+| | Antes | Ahora |
+|---|---|---|
+| Nombre de la especie visible | al final (~10 s en la app) | **3.2 s** (mediana) |
+| Resultado guardado | ~10 s | **4.4 s** (mediana) |
+
+Qué cambió:
+- **La IA en dos pasos.** Antes Claude escribía la ficha completa (descripción, hábitat…) en cada foto, aunque la especie ya estuviera
+  en el catálogo. Ahora solo identifica; la ficha se escribe aparte (sin la foto, más barata), solo para especies nuevas y después
+  de mostrar el resultado.
+- **Respuesta por partes (streaming).** La app muestra el nombre en cuanto Claude lo escribe.
+- **La ubicación ya no hace esperar.** Se busca al tocar la cámara, mientras encuadras; si no llega a tiempo se identifica sin ella
+  (antes podía detener todo hasta 12 s).
+- **La pantalla de resultado ya no recarga nada** (antes volvía a pedir la observación, la foto y el catálogo completo).
+- **La API valida la sesión sola** (con la clave pública ES256 de Supabase) y guarda todo en **un solo viaje** a la base de datos.
+- **GBIF en paralelo:** el nombre se valida mientras Claude termina de escribir, así que no suma tiempo.
+- Instrucciones en caché, miniaturas de 320 px para las listas (unas 10 veces menos datos) y catálogo por páginas.
+
+**Precisión (sin perderla):** se midió con `python -m scripts.evaluar_ia` y 33 fotos reales de iNaturalist de especies conocidas.
+Antes: 68 % de aciertos de especie (promedio de 2 corridas); ahora: 68 % (promedio de 3). La especie correcta aparece entre las
+parecidas en el 84 % de los casos (antes 78 %), justo lo que aprovecha "¿Cuál de estas es?". También se probó responder **sin
+razonar**: casi el doble de rápido, pero acertaba 54-58 %, así que se descartó (`IA_RAZONAMIENTO=bajo`, el valor por defecto).
+Gasto total en IA de todo este trabajo (evaluaciones y pruebas reales): unos **0.13 dólares**.
+
+## Seguridad y privacidad
+
+- **Límite diario a prueba de trucos.** Antes, borrar una observación devolvía el cupo (identificar, borrar, repetir = IA sin límite)
+  y 10 peticiones al mismo tiempo pasaban todas. Ahora se cuenta en `uso_ia`, que la app no puede leer ni borrar, y la API **reserva
+  el lugar antes** de llamar a la IA, con un candado por persona. Si la IA falla, el lugar se devuelve.
+- **Invitados:** 3 al día, y como mucho 15 desde una misma red (huella anónima de la IP que se borra a los 3 días).
+- **Tope global de 500 identificaciones al día** para proteger tu saldo de Claude.
+- Todos los números viven en la tabla `ajustes` de Supabase (antes estaban repetidos en tres lugares).
+- **Privado por defecto.** Las observaciones nuevas son privadas (las 13 que había también pasaron a privadas). Si publicas, los demás
+  ven la ubicación **aproximada (~10 km)**; en especies protegidas, ninguna. La vista `observaciones_publicas`, que Supabase marcaba
+  como ERROR de seguridad, se cambió por la función `avistamientos_publicos`.
+- **Catálogo validado con GBIF:** una especie nueva solo entra si GBIF la reconoce; los sinónimos se guardan con el nombre aceptado
+  (y las formas domésticas se respetan: *Canis familiaris* → *Canis lupus familiaris*, no el lobo).
+- 5 políticas RLS más rápidas, índices nuevos y búsqueda sin acentos con índice de trigramas.
+- **Eliminar mi cuenta** (obligatorio en las tiendas de apps): borra la cuenta, las fotos y las observaciones.
+- En producción (`PRODUCCION=1`) la persona no ve detalles técnicos de los errores; el Dockerfile corre sin privilegios.
+
+## Interfaz nueva
+
+Sistema de diseño propio ("guía de campo moderna"): verde musgo y maíz, tipografía Fraunces (títulos y nombres científicos en cursiva)
+y Manrope, un color por grupo, **modo oscuro** (automático o elegido) y fuentes incluidas en la app (no dependen de internet).
+
+- **Bienvenida con "Empezar sin cuenta"**: se prueba en un toque. Después, el invitado crea su cuenta sin perder nada.
+- **Botón de cámara al centro de la barra**: identificar está a un toque desde cualquier pantalla.
+- **Una sola pantalla de análisis y resultado**: escaneo animado sobre tu foto, el nombre aparece en cuanto llega y la ficha se completa sola.
+- **"¿Cuál de estas es?"**: si la IA duda, eliges entre las parecidas, con sus fotos (del catálogo o de Wikipedia).
+- **"¿No es correcto?"** manda una observación a revisión.
+- **Colección**: tus especies como tarjetas, avance por grupo, línea de tiempo y **tu mapa** (ubicación exacta, solo tú la ves).
+- **Explorar**: búsqueda sin acentos, filtros, carga por páginas y **mapa de avistamientos públicos** (MapLibre + OpenStreetMap, gratis).
+- **Sin señal**: la foto se guarda en el teléfono y se identifica sola al volver la conexión (o el cupo).
+- **Compartir**, vibración al identificar, esqueletos de carga y accesibilidad (zoom permitido, foco visible, "reducir movimiento").
+- **Panel de revisión** para administradores (confirmar especies y revisar las fichas que escribió la IA).
+- **Aviso de privacidad y términos** en lenguaje claro.
+- **Android**: proyecto nativo agregado (`app/android`) con permisos de cámara, galería y ubicación.
+
+## Archivos
+
+- **Base de datos:** `supabase/migrations/20261014000005_rendimiento_seguridad_privacidad.sql` (nueva) y `supabase/tests/*`.
+- **API:** `app/ia.py`, `app/main.py`, `app/config.py`, `app/supabase_client.py` y `app/fotos_especies.py`; nuevos `app/identificacion.py`,
+  `app/sesion.py`, `app/taxonomia.py`, `scripts/evaluar_ia.py` y `scripts/evaluacion/`; además `scripts/diagnostico.py`,
+  `scripts/prueba_real.py`, `requirements.txt`, `Dockerfile`, `.env.example` y todas las pruebas.
+- **App:** casi toda reescrita (`src/app/**`, `src/styles/`, `src/index.html`, `public/`), `angular.json`, `package.json` y `android/`.
+- **Pruebas de punta a punta:** `pruebas/e2e/` (ahora corren en Windows con `levantar.py`); se borró `levantar.sh`.
+
+## Pruebas que pasaron
+
+- **API: 89 de 89** (antes 41). **App: 23 de 23** y compilación de producción sin errores ni avisos.
+- **Base de datos: todas** las de `supabase/tests/01_pruebas_rls.sql` (límite, invitados, red, tope global, privacidad, colección, revisión).
+- **Navegador de punta a punta: 26 de 26** (invitado, streaming, especie nueva con GBIF, "¿Cuál de estas es?", límite que no se salta
+  borrando, invitado → cuenta, modo oscuro, mapas, privacidad entre personas, sin conexión, panel de revisión y eliminar cuenta).
+- Medición real con Claude y GBIF reales (arriba).
+
+## Lo que falta o depende de ti
+
+- Los 3 pasos del principio (migración, invitados y enlace de correo).
+- **Publicar la API** (Cloud Run, Railway o Render, con el `Dockerfile`) y poner su dirección en `app/src/environments/environment.prod.ts`
+  (`apiUrl`). La app nativa la necesita: en el teléfono no existe "localhost".
+- **Compilar el APK**: abre `app/android` con Android Studio, con JDK 21 (el JDK 25 que trae tu Android Studio puede no funcionar con el
+  Gradle de Capacitor 8). Para iOS hace falta una Mac (`npx cap add ios`).
+- La protección contra contraseñas filtradas de Supabase es del plan de pago; se puede activar ahí si algún día cambias de plan.
+
+---
+
+# Cambios del 13 de octubre de 2026 (madrugada del 14): solo Claude, revisión completa
+
+## Por qué Claude rechazaba las fotos
+
+Probé tu clave directamente contra Claude. La respuesta real fue: *"This API key is not scoped to a workspace, so this request
+must include the anthropic-workspace-id header"*. Tu clave era de ámbito **"Organización"**, y ese tipo de clave no sirve
+sola. La API solo mostraba "Claude rechazó la petición" y escondía el motivo. Antes de eso hubo otros dos problemas:
+en `api/.env` estaba el **identificador** de la clave (`apikey_…`) y después la clave **abreviada** que muestra la consola (con "...").
+
+**Solución:** una clave nueva del espacio de trabajo "Default" (ver COMO_EJECUTAR.md, paso 3b). Si prefieres conservar
+una clave de Organización, la API ahora acepta `ANTHROPIC_WORKSPACE_ID` en `api/.env`.
+
+## Qué cambió
+
+- **Solo Claude.** Se quitó todo lo de Gemini (código, variables, pruebas y guía). La IA es Claude Haiku 5.5:
+  razonamiento corto, respuesta con el formato exacto de la ficha y un reintento automático si Claude está saturado.
+- **Mensajes con la causa real.** Clave de Organización, clave inválida o incompleta, sin saldo, sin permiso,
+  modelo inexistente, límite de uso, saturado, sin internet y tiempo agotado tienen su propio mensaje.
+  Cualquier otro rechazo ahora muestra el motivo que da Claude en vez de esconderlo.
+- **Cualquier animal.** Antes la IA descartaba perros, gatos y otros animales domésticos; ahora los identifica.
+- **Tipo de imagen verificado.** El tipo de la foto se toma de sus primeros bytes, no de lo que diga el archivo.
+  Si una PNG se guardaba como JPEG, Claude rechazaba la petición.
+- **`api/.env` más tolerante.** Funciona aunque el Bloc de notas lo guarde con BOM o la clave quede entre comillas.
+  Si `IA_MODELO` sigue diciendo `gemini-…`, se usa `claude-haiku-5-5`.
+- **Diagnóstico:** `python -m scripts.diagnostico` dice con qué empieza y cuánto mide la clave que está leyendo
+  (sin mostrarla) y hace una identificación real con Claude.
+- **La app espera hasta 2 minutos** (la API tarda como máximo ~95 s si Claude está saturado y reintenta).
+- Se recuperaron los cambios de nombre de tu versión (sin "Plantas vs Zombies"), que la actualización anterior había revertido
+  en `api/app/main.py`, y se volvió a agregar `api/.env.example`, ahora solo con Claude.
+- `.gitattributes`: los scripts `.sh` se guardan con saltos de línea de Linux (con los de Windows no corrían).
+
+## Archivos
+
+`api/app/ia.py`, `api/app/config.py`, `api/app/main.py`, `api/.env.example` (nuevo), `api/scripts/diagnostico.py`,
+`api/scripts/prueba_real.py`, `api/tests/conftest.py`, `api/tests/test_ia.py`, `api/tests/test_api.py`,
+`app/src/app/core/api.service.ts`, `app/src/app/core/api.service.spec.ts`, `pruebas/e2e/fake_ia.py`, `pruebas/e2e/levantar.sh`,
+`pruebas/e2e/prueba_e2e.py`, `.gitattributes` (nuevo), `COMO_EJECUTAR.md`, `README.md`, `CAMBIOS.md`.
+No cambia nada en la base de datos.
+
+## Pruebas
+
+- API: 40 de 40 (Claude simulado). App: 14 de 14 y la compilación de producción sin errores.
+- Navegador de punta a punta: 21 de 21 (registro, identificación, catálogo, límite diario, permisos), con Claude simulado.
+- Tu base de datos real en Supabase: las 4 migraciones aplicadas, 99 especies (95 verificadas), 10 observaciones guardadas,
+  bucket de fotos privado. No hizo falta cambiarla.
+- **Con Claude real:** tu clave llega a Claude y la respuesta confirmó la causa de arriba. La identificación con Claude real
+  queda pendiente de tu clave nueva: córrela con `python -m scripts.diagnostico C:\ruta\a\foto.jpg`.
+
+---
+
 # Cambios del 13 de octubre de 2026 (noche): la identificación ya funciona de punta a punta
 
 ## Qué estaba fallando

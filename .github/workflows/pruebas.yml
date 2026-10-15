@@ -1,0 +1,60 @@
+# Corre las pruebas de la API, la app y la base de datos en cada cambio (GitHub Actions es gratis en repositorios públicos
+# y tiene minutos gratis en privados). No usa claves reales: Claude, GBIF y Supabase están simulados.
+name: Pruebas
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  api:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: api
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+      - run: python -m pip install -r requirements-dev.txt
+      - run: python -m pytest -q
+
+  app:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: app
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+          cache-dependency-path: app/package-lock.json
+      - run: npm ci
+      - run: npx ng test --watch=false
+      - run: npx ng build
+
+  base-de-datos:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_PASSWORD: postgres
+        ports: ["5432:5432"]
+        options: --health-cmd pg_isready --health-interval 5s --health-timeout 5s --health-retries 10
+    env:
+      PGPASSWORD: postgres
+    steps:
+      - uses: actions/checkout@v4
+      - name: Migraciones, catálogo y pruebas de permisos (RLS)
+        run: |
+          P="psql -h localhost -U postgres -v ON_ERROR_STOP=1 -q"
+          $P -c "create database pruebas"
+          $P -d pruebas -f supabase/tests/00_stub_supabase.sql
+          for m in supabase/migrations/*.sql; do $P -d pruebas -f "$m"; done
+          $P -d pruebas -f supabase/seed.sql
+          $P -d pruebas -f supabase/seed_imagenes.sql
+          $P -d pruebas -f supabase/tests/01_pruebas_rls.sql

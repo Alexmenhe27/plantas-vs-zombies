@@ -1,0 +1,1033 @@
+{
+ "resumen": {
+  "fotos": 33,
+  "aciertos_especie": 0.636,
+  "aciertos_genero": 0.788,
+  "correcta_entre_candidatos": 0.788,
+  "segundos_mediana": 7.56,
+  "segundos_p90": 10.37,
+  "segundos_al_nombre_mediana": 7.56,
+  "tokens_salida_promedio": 1034.8,
+  "gasto_usd": 0.0269
+ },
+ "resultados": [
+  {
+   "esperado": "Quiscalus mexicanus",
+   "predicho": "Quiscalus mexicanus",
+   "acierto": true,
+   "genero": true,
+   "confianza": 0.8,
+   "problema": "ninguno",
+   "segundos": 6.98,
+   "segundos_al_nombre": 6.98,
+   "uso": {
+    "cache_creation": {
+     "ephemeral_1h_input_tokens": 0,
+     "ephemeral_5m_input_tokens": 0
+    },
+    "cache_creation_input_tokens": 0,
+    "cache_read_input_tokens": 0,
+    "inference_geo": "global",
+    "input_tokens": 2968,
+    "output_tokens": 778,
+    "output_tokens_details": {
+     "thinking_tokens": 194
+    },
+    "service_tier": "standard"
+   },
+   "candidatos": [
+    "Quiscalus mexicanus",
+    "Molothrus ater",
+    "Euphagus cyanocephalus"
+   ],
+   "en_candidatos": true
+  },
+  {
+   "esperado": "Pyrocephalus rubinus",
+   "predicho": "Pyrocephalus rubinus",
+   "acierto": true,
+   "genero": true,
+   "confianza": 0.9,
+   "problema": "ninguno",
+   "segundos": 5.53,
+   "segundos_al_nombre": 5.53,
+   "uso": {
+    "cache_creation": {
+     "ephemeral_1h_input_tokens": 0,
+     "ephemeral_5m_input_tokens": 0
+    },
+    "cache_creation_input_tokens": 0,
+    "cache_read_input_tokens": 0,
+    "inference_geo": "global",
+    "input_tokens": 3079,
+    "output_tokens": 877,
+    "output_tokens_details": {
+     "thinking_tokens": 324
+    },
+    "service_tier": "standard"
+   },
+   "candidatos": [
+    "Pyrocephalus rubinus",
+    "Piranga rubra",
+    "Cardinalis cardinalis"
+   ],
+   "en_candidatos": true
+  },
+  {
+   "esperado": "Haemorhous mexicanus",
+   "predicho": "Haemorhous mexicanus",
+   "acierto": true,
+   "genero": true,
+   "confianza": 0.75,
+   "problema": "ninguno",
+   "segundos": 5.6,
+   "segundos_al_nombre": 5.6,
+   "uso": {
+    "cache_creation": {
+     "ephemeral_1h_input_tokens": 0,
+     "ephemeral_5m_input_tokens": 0
+    },
+    "cache_creation_input_tokens": 0,
+    "cache_read_input_tokens": 0,
+    "inference_geo": "global",
+    "input_tokens": 3079,
+    "output_tokens": 961,
+    "output_tokens_details": {
+     "thinking_tokens": 364
+    },
+    "service_tier": "standard"
+   },
+   "candidatos": [
+    "Haemorhous mexicanus",
+    "Haemorhous cassinii",
+    "Haemorhous mcgregori"
+   ],
+   "en_candidatos": true
+  },
+  {
+   "esperado": "Columbina inca",
+   "predicho": "Columbina inca",
+   "acierto": true,
+   "genero": true,
+   "confianza": 0.85,
+   "problema": "ninguno",
+   "segundos": 5.07,
+   "segundos_al_nombre": 5.07,
+   "uso": {
+    "cache_creation": {
+     "ephemeral_1h_input_tokens": 0,
+     "ephemeral_5m_input_tokens": 0
+    },
+    "cache_creation_input_tokens": 0,
+    "cache_read_input_tokens": 0,
+    "inference_geo": "global",
+    "input_tokens": 2820,
+    "output_tokens": 846,
+    "output_tokens_details": {
+     "thinking_tokens": 266
+    },
+    "service_tier": "standard"
+   },
+   "candidatos": [
+    "Columbina inca",
+    "Columbina passerina",
+    "Columbina talpacoti"
+   ],
+   "en_candidatos": true
+  },
+  {
+   "esperado": "Melanotis caerulescens",
+   "predicho": "Melanotis caerulescens",
+   "acierto": true,
+   "genero": true,
+   "confianza": 0.5,
+   "problema": "ninguno",
+   "segundos": 8.94,
+   "segundos_al_nombre": 8.94,
+   "uso": {
+    "cache_creation": {
+     "ephemeral_1h_input_tokens": 0,
+     "ephemeral_5m_input_tokens": 0
+    },
+    "cache_creation_input_tokens": 0,
+    "cache_read_input_tokens": 0,
+    "inference_geo": "global",
+    "input_tokens": 2968,
+    "output_tokens": 1425,
+    "output_tokens_details": {
+     "thinking_tokens": 858
+    },
+    "service_tier": "standard"
+   },
+   "candidatos": [
+    "Melanotis caerulescens",
+    "Ptilogonys cinereus",
+    "Turdus migratorius"
+   ],
+   "en_candidatos": true
+  },
+  {
+   "esperado": "Buteo jamaicensis",
+   "predicho": "Parabuteo unicinctus",
+   "acierto": false,
+   "genero": false,
+   "confianza": 0.6,
+   "problema": "ninguno",
+   "segundos": 7.81,
+   "segundos_al_nombre": 7.81,
+   "uso": {
+    "cache_creation": {
+     "ephemeral_1h_input_tokens": 0,
+     "ephemeral_5m_input_tokens": 0
+    },
+    "cache_creation_input_tokens": 0,
+    "cache_read_input_tokens": 0,
+    "inference_geo": "global",
+    "input_tokens": 3079,
+    "output_tokens": 1344,
+    "output_tokens_details": {
+     "thinking_tokens": 787
+    },
+    "service_tier": "standard"
+   },
+   "candidatos": [
+    "Parabuteo unicinctus",
+    "Buteo jamaicensis",
+    "Buteo albonotatus"
+   ],
+   "en_candidatos": true
+  },
+  {
+   "esperado": "Cynanthus latirostris",
+   "predicho": "Cynanthus latirostris",
+   "acierto": true,
+   "genero": true,
+   "confianza": 0.6,
+   "problema": "ninguno",
+   "segundos": 7.56,
+   "segundos_al_nombre": 7.56,
+   "uso": {
+    "cache_creation": {
+     "ephemeral_1h_input_tokens": 0,
+     "ephemeral_5m_input_tokens": 0
+    },
+    "cache_creation_input_tokens": 0,
+    "cache_read_input_tokens": 0,
+    "inference_geo": "global",
+    "input_tokens": 2442,
+    "output_tokens": 1262,
+    "output_tokens_details": {
+     "thinking_tokens": 697
+    },
+    "service_tier": "standard"
+   },
+   "candidatos": [
+    "Cynanthus latirostris",
+    "Basilinna xantusii",
+    "Calypte anna"
+   ],
+   "en_candidatos": true
+  },
+  {
+   "esperado": "Bassariscus astutus",
+   "predicho": "Didelphis virginiana",
+   "acierto": false,
+   "genero": false,
+   "confianza": 0.72,
+   "problema": "ninguno",
+   "segundos": 6.57,
+   "segundos_al_nombre": 6.57,
+   "uso": {
+    "cache_creation": {
+     "ephemeral_1h_input_tokens": 0,
+     "ephemeral_5m_input_tokens": 0
+    },
+    "cache_creation_input_tokens": 0,
+    "cache_read_input_tokens": 0,
+    "inference_geo": "global",
+    "input_tokens": 3079,
+    "output_tokens": 996,
+    "output_tokens_details": {
+     "thinking_tokens": 363
+    },
+    "service_tier": "standard"
+   },
+   "candidatos": [
+    "Didelphis virginiana",
+    "Didelphis marsupialis",
+    "Procyon lotor"
+   ],
+   "en_candidatos": false
+  },
+  {
+   "esperado": "Didelphis virginiana",
+   "predicho": "Didelphis virginiana",
+   "acierto": true,
+   "genero": true,
+   "confianza": 0.95,
+   "problema": "ninguno",
+   "segundos": 7.38,
+   "segundos_al_nombre": 7.38,
+   "uso": {
+    "cache_creation": {
+     "ephemeral_1h_input_tokens": 0,
+     "ephemeral_5m_input_tokens": 0
+    },
+    "cache_creation_input_tokens": 0,
+    "cache_read_input_tokens": 0,
+    "inference_geo": "global",
+    "input_tokens": 2968,
+    "output_tokens": 573,
+    "output_tokens_details": {
+     "thinking_tokens": 0
+    },
+    "service_tier": "standard"
+   },
+   "candidatos": [
+    "Didelphis virginiana",
+    "Didelphis marsupialis",
+    "Philander opossum"
+   ],
+   "en_candidatos": true
+  },
+  {
+   "esperado": "Nasua narica",
+   "predicho": "Nasua narica",
+   "acierto": true,
+   "genero": true,
+   "confianza": 0.9,
+   "problema": "ninguno",
+   "segundos": 8.83,
+   "segundos_al_nombre": 8.83,
+   "uso": {
+    "cache_creation": {
+     "ephemeral_1h_input_tokens": 0,
+     "ephemeral_5m_input_tokens": 0
+    },
+    "cache_creation_input_tokens": 0,
+    "cache_read_input_tokens": 0,
+    "inference_geo": "global",
+    "input_tokens": 3079,
+    "output_tokens": 872,
+    "output_tokens_details": {
+     "thinking_tokens": 260
+    },
+    "service_tier": "standard"
+   },
+   "candidatos": [
+    "Nasua narica",
+    "Procyon lotor",
+    "Nasua nasica"
+   ],
+   "en_candidatos": true
+  },
+  {
+   "esperado": "Sciurus aureogaster",
+   "predicho": "Sciurus carolinensis",
+   "acierto": false,
+   "genero": true,
+   "confianza": 0.72,
+   "problema": "ninguno",
+   "segundos": 9.78,
+   "segundos_al_nombre": 9.78,
+   "uso": {
+    "cache_creation": {
+     "ephemeral_1h_input_tokens": 0,
+     "ephemeral_5m_input_tokens": 0
+    },
+    "cache_creation_input_tokens": 0,
+    "cache_read_input_tokens": 0,
+    "inference_geo": "global",
+    "input_tokens": 3079,
+    "output_tokens": 1042,
+    "output_tokens_details": {
+     "thinking_tokens": 385
+    },
+    "service_tier": "standard"
+   },
+   "candidatos": [
+    "Sciurus carolinensis",
+    "Sciurus aureogaster",
+    "Sciurus niger"
+   ],
+   "en_candidatos": true
+  },
+  {
+   "esperado": "Urocyon cinereoargenteus",
+   "predicho": "Urocyon cinereoargenteus",
+   "acierto": true,
+   "genero": true,
+   "confianza": 0.8,
+   "problema": "ninguno",
+   "segundos": 5.27,
+   "segundos_al_nombre": 5.27,
+   "uso": {
+    "cache_creation": {
+     "ephemeral_1h_input_tokens": 0,
+     "ephemeral_5m_input_tokens": 0
+    },
+    "cache_creation_input_tokens": 0,
+    "cache_read_input_tokens": 0,
+    "inference_geo": "global",
+    "input_tokens": 2848,
+    "output_tokens": 858,
+    "output_tokens_details": {
+     "thinking_tokens": 278
+    },
+    "service_tier": "standard"
+   },
+   "candidatos": [
+    "Urocyon cinereoargenteus",
+    "Vulpes vulpes",
+    "Canis lupus familiaris"
+   ],
+   "en_candidatos": true
+  },
+  {
+   "esperado": "Odocoileus virginianus",
+   "predicho": "Odocoileus virginianus",
+   "acierto": true,
+   "genero": true,
+   "confianza": 0.9,
+   "problema": "ninguno",
+   "segundos": 8.27,
+   "segundos_al_nombre": 8.27,
+   "uso": {
+    "cache_creation": {
+     "ephemeral_1h_input_tokens": 0,
+     "ephemeral_5m_input_tokens": 0
+    },
+    "cache_creation_input_tokens": 0,
+    "cache_read_input_tokens": 0,
+    "inference_geo": "global",
+    "input_tokens": 3042,
+    "output_tokens": 961,
+    "output_tokens_details": {
+     "thinking_tokens": 375
+    },
+    "service_tier": "standard"
+   },
+   "candidatos": [
+    "Odocoileus virginianus",
+    "Mazama temama",
+    "Odocoileus hemionus"
+   ],
+   "en_candidatos": true
+  },
+  {
+   "esperado": "Sceloporus grammicus",
+   "predicho": "Sceloporus torquatus",
+   "acierto": false,
+   "genero": true,
+   "confianza": 0.6,
+   "problema": "ninguno",
+   "segundos": 22.16,
+   "segundos_al_nombre": 22.16,
+   "uso": {
+    "cache_creation": {
+     "ephemeral_1h_input_tokens": 0,
+     "ephemeral_5m_input_tokens": 0
+    },
+    "cache_creation_input_tokens": 0,
+    "cache_read_input_tokens": 0,
+    "inference_geo": "global",
+    "input_tokens": 3079,
+    "output_tokens": 1120,
+    "output_tokens_details": {
+     "thinking_tokens": 520
+    },
+    "service_tier": "standard"
+   },
+   "candidatos": [
+    "Sceloporus torquatus",
+    "Sceloporus grammicus",
+    "Sceloporus aeneus"
+   ],
+   "en_candidatos": true
+  },
+  {
+   "esperado": "Ctenosaura pectinata",
+   "predicho": "Ctenosaura pectinata",
+   "acierto": true,
+   "genero": true,
+   "confianza": 0.8,
+   "problema": "ninguno",
+   "segundos": 19.58,
+   "segundos_al_nombre": 19.58,
+   "uso": {
+    "cache_creation": {
+     "ephemeral_1h_input_tokens": 0,
+     "ephemeral_5m_input_tokens": 0
+    },
+    "cache_creation_input_tokens": 0,
+    "cache_read_input_tokens": 0,
+    "inference_geo": "global",
+    "input_tokens": 3079,
+    "output_tokens": 1318,
+    "output_tokens_details": {
+     "thinking_tokens": 716
+    },
+    "service_tier": "standard"
+   },
+   "candidatos": [
+    "Ctenosaura pectinata",
+    "Ctenosaura similis",
+    "Iguana iguana"
+   ],
+   "en_candidatos": true
+  },
+  {
+   "esperado": "Rhinella horribilis",
+   "predicho": "Rhinella marina",
+   "acierto": false,
+   "genero": true,
+   "confianza": 0.9,
+   "problema": "ninguno",
+   "segundos": 7.18,
+   "segundos_al_nombre": 7.18,
+   "uso": {
+    "cache_creation": {
+     "ephemeral_1h_input_tokens": 0,
+     "ephemeral_5m_input_tokens": 0
+    },
+    "cache_creation_input_tokens": 0,
+    "cache_read_input_tokens": 0,
+    "inference_geo": "global",
+    "input_tokens": 2820,
+    "output_tokens": 774,
+    "output_tokens_details": {
+     "thinking_tokens": 151
+    },
+    "service_tier": "standard"
+   },
+   "candidatos": [
+    "Rhinella marina",
+    "Incilius valliceps",
+    "Anaxyrus punctatus"
+   ],
+   "en_candidatos": false
+  },
+  {
+   "esperado": "Hippodamia convergens",
+   "predicho": "Hippodamia convergens",
+   "acierto": true,
+   "genero": true,
+   "confianza": 0.6,
+   "problema": "ninguno",
+   "segundos": 8.24,
+   "segundos_al_nombre": 8.24,
+   "uso": {
+    "cache_creation": {
+     "ephemeral_1h_input_tokens": 0,
+     "ephemeral_5m_input_tokens": 0
+    },
+    "cache_creation_input_tokens": 0,
+    "cache_read_input_tokens": 0,
+    "inference_geo": "global",
+    "input_tokens": 3079,
+    "output_tokens": 1076,
+    "output_tokens_details": {
+     "thinking_tokens": 496
+    },
+    "service_tier": "standard"
+   },
+   "candidatos": [
+    "Hippodamia convergens",
+    "Coccinella septempunctata",
+    "Cycloneda sanguinea"
+   ],
+   "en_candidatos": true
+  },
+  {
+   "esperado": "Hetaerina americana",
+   "predicho": "Hetaerina americana",
+   "acierto": true,
+   "genero": true,
+   "confianza": 0.72,
+   "problema": "ninguno",
+   "segundos": 10.34,
+   "segundos_al_nombre": 10.34,
+   "uso": {
+    "cache_creation": {
+     "ephemeral_1h_input_tokens": 0,
+     "ephemeral_5m_input_tokens": 0
+    },
+    "cache_creation_input_tokens": 0,
+    "cache_read_input_tokens": 0,
+    "inference_geo": "global",
+    "input_tokens": 2968,
+    "output_tokens": 1124,
+    "output_tokens_details": {
+     "thinking_tokens": 539
+    },
+    "service_tier": "standard"
+   },
+   "candidatos": [
+    "Hetaerina americana",
+    "Hetaerina titia",
+    "Hetaerina sp."
+   ],
+   "en_candidatos": true
+  },
+  {
+   "esperado": "Sphenarium purpurascens",
+   "predicho": "Schistocerca nitens",
+   "acierto": false,
+   "genero": false,
+   "confianza": 0.4,
+   "problema": "ninguno",
+   "segundos": 6.61,
+   "segundos_al_nombre": 6.61,
+   "uso": {
+    "cache_creation": {
+     "ephemeral_1h_input_tokens": 0,
+     "ephemeral_5m_input_tokens": 0
+    },
+    "cache_creation_input_tokens": 0,
+    "cache_read_input_tokens": 0,
+    "inference_geo": "global",
+    "input_tokens": 3079,
+    "output_tokens": 1054,
+    "output_tokens_details": {
+     "thinking_tokens": 489
+    },
+    "service_tier": "standard"
+   },
+   "candidatos": [
+    "Schistocerca nitens",
+    "Schistocerca piceifrons",
+    "Melanoplus sp."
+   ],
+   "en_candidatos": false
+  },
+  {
+   "esperado": "Jacaranda mimosifolia",
+   "predicho": "Jacaranda jorullensis",
+   "acierto": false,
+   "genero": true,
+   "confianza": 0.6,
+   "problema": "ninguno",
+   "segundos": 20.6,
+   "segundos_al_nombre": 20.6,
+   "uso": {
+    "cache_creation": {
+     "ephemeral_1h_input_tokens": 0,
+     "ephemeral_5m_input_tokens": 0
+    },
+    "cache_creation_input_tokens": 0,
+    "cache_read_input_tokens": 0,
+    "inference_geo": "global",
+    "input_tokens": 2968,
+    "output_tokens": 924,
+    "output_tokens_details": {
+     "thinking_tokens": 365
+    },
+    "service_tier": "standard"
+   },
+   "candidatos": [
+    "Jacaranda jorullensis",
+    "Jacaranda mimosifolia",
+    "Jacaranda sp."
+   ],
+   "en_candidatos": true
+  },
+  {
+   "esperado": "Schinus molle",
+   "predicho": "Prosopis laevigata",
+   "acierto": false,
+   "genero": false,
+   "confianza": 0.6,
+   "problema": "ninguno",
+   "segundos": 20.99,
+   "segundos_al_nombre": 20.99,
+   "uso": {
+    "cache_creation": {
+     "ephemeral_1h_input_tokens": 0,
+     "ephemeral_5m_input_tokens": 0
+    },
+    "cache_creation_input_tokens": 0,
+    "cache_read_input_tokens": 0,
+    "inference_geo": "global",
+    "input_tokens": 3079,
+    "output_tokens": 1064,
+    "output_tokens_details": {
+     "thinking_tokens": 516
+    },
+    "service_tier": "standard"
+   },
+   "candidatos": [
+    "Prosopis laevigata",
+    "Schinus molle",
+    "Taxodium mucronatum"
+   ],
+   "en_candidatos": true
+  },
+  {
+   "esperado": "Taxodium mucronatum",
+   "predicho": "Ficus sp.",
+   "acierto": false,
+   "genero": false,
+   "confianza": 0.3,
+   "problema": "ninguno",
+   "segundos": 9.44,
+   "segundos_al_nombre": 9.44,
+   "uso": {
+    "cache_creation": {
+     "ephemeral_1h_input_tokens": 0,
+     "ephemeral_5m_input_tokens": 0
+    },
+    "cache_creation_input_tokens": 0,
+    "cache_read_input_tokens": 0,
+    "inference_geo": "global",
+    "input_tokens": 2968,
+    "output_tokens": 1554,
+    "output_tokens_details": {
+     "thinking_tokens": 1030
+    },
+    "service_tier": "standard"
+   },
+   "candidatos": [
+    "Ficus sp.",
+    "Brosimum alicastrum",
+    "Dacryodes mexicana"
+   ],
+   "en_candidatos": false
+  },
+  {
+   "esperado": "Opuntia ficus-indica",
+   "predicho": "Opuntia streptacantha",
+   "acierto": false,
+   "genero": true,
+   "confianza": 0.6,
+   "problema": "ninguno",
+   "segundos": 6.71,
+   "segundos_al_nombre": 6.71,
+   "uso": {
+    "cache_creation": {
+     "ephemeral_1h_input_tokens": 0,
+     "ephemeral_5m_input_tokens": 0
+    },
+    "cache_creation_input_tokens": 0,
+    "cache_read_input_tokens": 0,
+    "inference_geo": "global",
+    "input_tokens": 3079,
+    "output_tokens": 958,
+    "output_tokens_details": {
+     "thinking_tokens": 379
+    },
+    "service_tier": "standard"
+   },
+   "candidatos": [
+    "Opuntia streptacantha",
+    "Opuntia hyptiacantha",
+    "Opuntia megacantha"
+   ],
+   "en_candidatos": false
+  },
+  {
+   "esperado": "Myrtillocactus geometrizans",
+   "predicho": "Cereus sp.",
+   "acierto": false,
+   "genero": false,
+   "confianza": 0.4,
+   "problema": "ninguno",
+   "segundos": 6.82,
+   "segundos_al_nombre": 6.82,
+   "uso": {
+    "cache_creation": {
+     "ephemeral_1h_input_tokens": 0,
+     "ephemeral_5m_input_tokens": 0
+    },
+    "cache_creation_input_tokens": 0,
+    "cache_read_input_tokens": 0,
+    "inference_geo": "global",
+    "input_tokens": 3079,
+    "output_tokens": 1146,
+    "output_tokens_details": {
+     "thinking_tokens": 659
+    },
+    "service_tier": "standard"
+   },
+   "candidatos": [
+    "Cereus sp.",
+    "Pachycereus sp.",
+    "Stenocereus sp."
+   ],
+   "en_candidatos": false
+  },
+  {
+   "esperado": "Tagetes erecta",
+   "predicho": "Tagetes erecta",
+   "acierto": true,
+   "genero": true,
+   "confianza": 0.72,
+   "problema": "ninguno",
+   "segundos": 6.63,
+   "segundos_al_nombre": 6.63,
+   "uso": {
+    "cache_creation": {
+     "ephemeral_1h_input_tokens": 0,
+     "ephemeral_5m_input_tokens": 0
+    },
+    "cache_creation_input_tokens": 0,
+    "cache_read_input_tokens": 0,
+    "inference_geo": "global",
+    "input_tokens": 2709,
+    "output_tokens": 983,
+    "output_tokens_details": {
+     "thinking_tokens": 417
+    },
+    "service_tier": "standard"
+   },
+   "candidatos": [
+    "Tagetes erecta",
+    "Tagetes patula",
+    "Tagetes lucida"
+   ],
+   "en_candidatos": true
+  },
+  {
+   "esperado": "Agave salmiana",
+   "predicho": "Agave salmiana",
+   "acierto": true,
+   "genero": true,
+   "confianza": 0.5,
+   "problema": "ninguno",
+   "segundos": 6.4,
+   "segundos_al_nombre": 6.4,
+   "uso": {
+    "cache_creation": {
+     "ephemeral_1h_input_tokens": 0,
+     "ephemeral_5m_input_tokens": 0
+    },
+    "cache_creation_input_tokens": 0,
+    "cache_read_input_tokens": 0,
+    "inference_geo": "global",
+    "input_tokens": 3079,
+    "output_tokens": 956,
+    "output_tokens_details": {
+     "thinking_tokens": 380
+    },
+    "service_tier": "standard"
+   },
+   "candidatos": [
+    "Agave salmiana",
+    "Agave atrovirens",
+    "Agave americana"
+   ],
+   "en_candidatos": true
+  },
+  {
+   "esperado": "Turdus rufopalliatus",
+   "predicho": "Turdus rufopalliatus",
+   "acierto": true,
+   "genero": true,
+   "confianza": 0.8,
+   "problema": "ninguno",
+   "segundos": 5.66,
+   "segundos_al_nombre": 5.66,
+   "uso": {
+    "cache_creation": {
+     "ephemeral_1h_input_tokens": 0,
+     "ephemeral_5m_input_tokens": 0
+    },
+    "cache_creation_input_tokens": 0,
+    "cache_read_input_tokens": 0,
+    "inference_geo": "global",
+    "input_tokens": 2931,
+    "output_tokens": 1038,
+    "output_tokens_details": {
+     "thinking_tokens": 481
+    },
+    "service_tier": "standard"
+   },
+   "candidatos": [
+    "Turdus rufopalliatus",
+    "Turdus migratorius",
+    "Turdus grayi"
+   ],
+   "en_candidatos": true
+  },
+  {
+   "esperado": "Melanerpes aurifrons",
+   "predicho": "",
+   "acierto": false,
+   "genero": false,
+   "confianza": 0.3,
+   "problema": "borrosa",
+   "segundos": 5.54,
+   "segundos_al_nombre": 5.54,
+   "uso": {
+    "cache_creation": {
+     "ephemeral_1h_input_tokens": 0,
+     "ephemeral_5m_input_tokens": 0
+    },
+    "cache_creation_input_tokens": 0,
+    "cache_read_input_tokens": 0,
+    "inference_geo": "global",
+    "input_tokens": 2672,
+    "output_tokens": 811,
+    "output_tokens_details": {
+     "thinking_tokens": 631
+    },
+    "service_tier": "standard"
+   },
+   "candidatos": [],
+   "en_candidatos": false
+  },
+  {
+   "esperado": "Pelecanus occidentalis",
+   "predicho": "Pelecanus occidentalis",
+   "acierto": true,
+   "genero": true,
+   "confianza": 0.8,
+   "problema": "ninguno",
+   "segundos": 10.37,
+   "segundos_al_nombre": 10.37,
+   "uso": {
+    "cache_creation": {
+     "ephemeral_1h_input_tokens": 0,
+     "ephemeral_5m_input_tokens": 0
+    },
+    "cache_creation_input_tokens": 0,
+    "cache_read_input_tokens": 0,
+    "inference_geo": "global",
+    "input_tokens": 2968,
+    "output_tokens": 1076,
+    "output_tokens_details": {
+     "thinking_tokens": 523
+    },
+    "service_tier": "standard"
+   },
+   "candidatos": [
+    "Pelecanus occidentalis",
+    "Phalacrocorax brasilianus"
+   ],
+   "en_candidatos": true
+  },
+  {
+   "esperado": "Sceloporus torquatus",
+   "predicho": "Sceloporus torquatus",
+   "acierto": true,
+   "genero": true,
+   "confianza": 0.6,
+   "problema": "ninguno",
+   "segundos": 7.61,
+   "segundos_al_nombre": 7.61,
+   "uso": {
+    "cache_creation": {
+     "ephemeral_1h_input_tokens": 0,
+     "ephemeral_5m_input_tokens": 0
+    },
+    "cache_creation_input_tokens": 0,
+    "cache_read_input_tokens": 0,
+    "inference_geo": "global",
+    "input_tokens": 3042,
+    "output_tokens": 1172,
+    "output_tokens_details": {
+     "thinking_tokens": 575
+    },
+    "service_tier": "standard"
+   },
+   "candidatos": [
+    "Sceloporus torquatus",
+    "Sceloporus formosus",
+    "Sceloporus grammicus"
+   ],
+   "en_candidatos": true
+  },
+  {
+   "esperado": "Junonia coenia",
+   "predicho": "Junonia coenia",
+   "acierto": true,
+   "genero": true,
+   "confianza": 0.8,
+   "problema": "ninguno",
+   "segundos": 7.9,
+   "segundos_al_nombre": 7.9,
+   "uso": {
+    "cache_creation": {
+     "ephemeral_1h_input_tokens": 0,
+     "ephemeral_5m_input_tokens": 0
+    },
+    "cache_creation_input_tokens": 0,
+    "cache_read_input_tokens": 0,
+    "inference_geo": "global",
+    "input_tokens": 2968,
+    "output_tokens": 861,
+    "output_tokens_details": {
+     "thinking_tokens": 258
+    },
+    "service_tier": "standard"
+   },
+   "candidatos": [
+    "Junonia coenia",
+    "Junonia evarete",
+    "Junonia nigrosuffusa"
+   ],
+   "en_candidatos": true
+  },
+  {
+   "esperado": "Ricinus communis",
+   "predicho": "Ricinus communis",
+   "acierto": true,
+   "genero": true,
+   "confianza": 0.65,
+   "problema": "ninguno",
+   "segundos": 6.86,
+   "segundos_al_nombre": 6.86,
+   "uso": {
+    "cache_creation": {
+     "ephemeral_1h_input_tokens": 0,
+     "ephemeral_5m_input_tokens": 0
+    },
+    "cache_creation_input_tokens": 0,
+    "cache_read_input_tokens": 0,
+    "inference_geo": "global",
+    "input_tokens": 2968,
+    "output_tokens": 1087,
+    "output_tokens_details": {
+     "thinking_tokens": 523
+    },
+    "service_tier": "standard"
+   },
+   "candidatos": [
+    "Ricinus communis",
+    "Cnidoscolus sp.",
+    "Croton sp."
+   ],
+   "en_candidatos": true
+  },
+  {
+   "esperado": "Leucaena leucocephala",
+   "predicho": "Leucaena leucocephala",
+   "acierto": true,
+   "genero": true,
+   "confianza": 0.65,
+   "problema": "ninguno",
+   "segundos": 8.23,
+   "segundos_al_nombre": 8.23,
+   "uso": {
+    "cache_creation": {
+     "ephemeral_1h_input_tokens": 0,
+     "ephemeral_5m_input_tokens": 0
+    },
+    "cache_creation_input_tokens": 0,
+    "cache_read_input_tokens": 0,
+    "inference_geo": "global",
+    "input_tokens": 3079,
+    "output_tokens": 1259,
+    "output_tokens_details": {
+     "thinking_tokens": 715
+    },
+    "service_tier": "standard"
+   },
+   "candidatos": [
+    "Leucaena leucocephala",
+    "Leucaena esculenta",
+    "Mimosa bahamensis"
+   ],
+   "en_candidatos": true
+  }
+ ]
+}

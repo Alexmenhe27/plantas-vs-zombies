@@ -1,26 +1,22 @@
 import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
 import { Router, RouterLink } from '@angular/router';
-import { AlertController, IonContent, IonIcon, IonSpinner, IonToggle, NavController, ToastController, ViewWillEnter } from '@ionic/angular';
+import { AlertController, IonContent, IonIcon, IonToggle, NavController, ToastController, ViewWillEnter } from '@ionic/angular';
+import { ApiService } from '../core/api.service';
 import { CatalogoService } from '../core/catalogo.service';
 import { fechaCorta } from '../core/fechas';
 import { FotosService } from '../core/fotos.service';
-import { etiquetaConservacion, iconoEspecie, nivelConfianza, nombreGrupo, porcentaje } from '../core/grupos';
+import { vibrarExito } from '../core/hapticos';
 import { Especie, Observacion } from '../core/modelos';
 import { ObservacionesService } from '../core/observaciones.service';
-import { FotoComponent } from '../shared/foto.component';
+import { SupabaseService } from '../core/supabase.service';
+import { compartirObservacion } from '../shared/compartir';
+import { FotoAnalisisComponent } from '../shared/foto-analisis.component';
+import { ResultadoComponent } from '../shared/resultado/resultado.component';
 
-type Vista = 'identificada' | 'revisar' | 'borrosa' | 'sin_organismo';
-
-interface CandidatoVista {
-  especie: Especie | null;
-  cientifico: string;
-  comun: string | null;
-  confianza: number;
-}
-
+/** Una observación guardada: el mismo resultado, más publicar, compartir, "no es correcto" y borrar. */
 @Component({
   selector: 'app-observacion',
-  imports: [FotoComponent, IonContent, IonIcon, IonSpinner, IonToggle, RouterLink],
+  imports: [FotoAnalisisComponent, ResultadoComponent, IonContent, IonIcon, IonToggle, RouterLink],
   templateUrl: './observacion.page.html',
   styleUrl: './observacion.page.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -29,6 +25,8 @@ export class ObservacionPage implements ViewWillEnter {
   private readonly obsService = inject(ObservacionesService);
   private readonly fotos = inject(FotosService);
   private readonly catalogo = inject(CatalogoService);
+  private readonly api = inject(ApiService);
+  private readonly sb = inject(SupabaseService);
   private readonly nav = inject(NavController);
   private readonly router = inject(Router);
   private readonly alert = inject(AlertController);
@@ -37,58 +35,51 @@ export class ObservacionPage implements ViewWillEnter {
   readonly obs = signal<Observacion | null>(null);
   readonly url = signal<string | null>(null);
   readonly cargando = signal(true);
-  readonly candidatos = signal<CandidatoVista[]>([]);
-  readonly nueva = signal(false);
-
-  readonly especie = computed(() => this.obs()?.especie ?? null);
-  readonly vista = computed<Vista | null>(() => {
-    const o = this.obs();
-    if (!o) return null;
-    if (o.ia_problema === 'borrosa') return 'borrosa';
-    if (o.ia_problema === 'sin_organismo') return 'sin_organismo';
-    if (o.estado === 'revisar' || !o.especie) return 'revisar';
-    return 'identificada';
-  });
-  readonly conservacion = computed(() => (this.especie() ? etiquetaConservacion(this.especie()!) : null));
-
-  readonly porcentaje = porcentaje;
-  readonly nivelConfianza = nivelConfianza;
-  readonly nombreGrupo = nombreGrupo;
-  readonly iconoEspecie = iconoEspecie;
+  readonly candidatos = signal<Especie[]>([]);
+  readonly eligiendo = signal(false);
+  readonly propia = computed(() => this.obs()?.usuario_id === this.sb.userId());
   readonly fechaCorta = fechaCorta;
 
   async ionViewWillEnter(): Promise<void> {
-    const url = this.router.parseUrl(this.router.url);
-    const id = url.root.children['primary']?.segments[1]?.path;
-    this.nueva.set(url.queryParams['nueva'] === '1');
+    const id = this.router.parseUrl(this.router.url).root.children['primary']?.segments[1]?.path;
     if (!id) return;
     this.cargando.set(true);
     try {
       const o = await this.obsService.una(id);
       this.obs.set(o);
       if (o) {
-        const urls = await this.fotos.urlsFirmadas([o.ruta_foto]);
+        const [urls, especies] = await Promise.all([
+          this.fotos.urlsFirmadas([o.ruta_foto]),
+          this.catalogo.porIds((o.ia_candidatos ?? []).map((c) => c.especie_id).filter((x): x is number => !!x)),
+        ]);
         this.url.set(urls[o.ruta_foto] ?? null);
-        let especies = await this.catalogo.cargar();
-        if ((o.ia_candidatos ?? []).some((c) => c.especie_id && !especies.some((e) => e.id === c.especie_id))) {
-          especies = await this.catalogo.cargar(true); // hay especies recién agregadas
-        }
-        const lista: CandidatoVista[] = (o.ia_candidatos ?? []).map((c) => {
-          const especie = especies.find((e) => e.id === c.especie_id) ?? null;
-          return { especie, cientifico: c.nombre_cientifico ?? especie?.nombre_cientifico ?? '', comun: c.nombre_comun ?? especie?.nombre_comun ?? null, confianza: c.confianza };
-        }).filter((c) => !!c.cientifico);
-        // Si la IA no dio candidatos pero sí una especie probable, se muestra esa.
-        if (!lista.length && o.especie) lista.push({ especie: o.especie, cientifico: o.especie.nombre_cientifico, comun: o.especie.nombre_comun, confianza: o.ia_confianza ?? 0 });
-        this.candidatos.set(lista);
+        this.candidatos.set(especies);
       }
+    } catch {
+      this.obs.set(null);
     } finally {
       this.cargando.set(false);
     }
   }
 
   volver(): void {
-    if (this.nueva()) this.nav.navigateRoot('/app/identificar');
-    else this.nav.back();
+    this.nav.back();
+  }
+
+  async elegir(nombre: string): Promise<void> {
+    const o = this.obs();
+    if (!o || this.eligiendo()) return;
+    this.eligiendo.set(true);
+    try {
+      const nueva = await this.api.elegir(o.id, nombre);
+      this.obs.set({ ...o, ...nueva });
+      this.catalogo.invalidar();
+      void vibrarExito();
+    } catch (e) {
+      await this.avisar(e instanceof Error ? e.message : 'No se pudo guardar tu elección.');
+    } finally {
+      this.eligiendo.set(false);
+    }
   }
 
   async cambiarPublica(evento: CustomEvent): Promise<void> {
@@ -100,8 +91,37 @@ export class ObservacionPage implements ViewWillEnter {
       this.obs.set({ ...o, es_publica: valor });
     } catch {
       this.obs.set({ ...o });
-      await (await this.toast.create({ message: 'No se pudo guardar el cambio.', duration: 2500, color: 'dark' })).present();
+      await this.avisar('No se pudo guardar el cambio.');
     }
+  }
+
+  async compartir(): Promise<void> {
+    const o = this.obs();
+    if (o) await compartirObservacion(o, this.toast);
+  }
+
+  async noEsCorrecto(): Promise<void> {
+    const o = this.obs();
+    if (!o) return;
+    const a = await this.alert.create({
+      header: '¿La especie no es correcta?',
+      message: 'La observación pasará a revisión: podrás elegir entre las especies parecidas y un experto la revisará.',
+      buttons: [
+        { text: 'Cancelar', role: 'cancel' },
+        {
+          text: 'Mandar a revisión',
+          handler: async () => {
+            try {
+              await this.obsService.marcarParaRevision(o.id);
+              this.obs.set({ ...o, estado: 'revisar' });
+            } catch {
+              await this.avisar('No se pudo mandar a revisión. Intenta de nuevo.');
+            }
+          },
+        },
+      ],
+    });
+    await a.present();
   }
 
   async borrar(): Promise<void> {
@@ -109,19 +129,28 @@ export class ObservacionPage implements ViewWillEnter {
     if (!o) return;
     const a = await this.alert.create({
       header: '¿Borrar esta observación?',
-      message: 'Se borrará la foto y el resultado. No cuenta de nuevo para tu límite de hoy.',
+      message: 'Se borrarán la foto y el resultado. Ya contó para tu límite de hoy, así que borrarla no te devuelve la identificación.',
       buttons: [
         { text: 'Cancelar', role: 'cancel' },
         {
           text: 'Borrar',
           role: 'destructive',
           handler: async () => {
-            await this.obsService.borrar(o);
-            this.nav.navigateRoot('/app/historial');
+            try {
+              await this.obsService.borrar(o);
+              this.catalogo.invalidar();
+              this.nav.navigateRoot('/app/coleccion');
+            } catch {
+              await this.avisar('No se pudo borrar. Intenta de nuevo.');
+            }
           },
         },
       ],
     });
     await a.present();
+  }
+
+  private async avisar(mensaje: string): Promise<void> {
+    await (await this.toast.create({ message: mensaje, duration: 3000, color: 'dark' })).present();
   }
 }

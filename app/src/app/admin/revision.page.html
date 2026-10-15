@@ -1,0 +1,101 @@
+<ion-content>
+  <ion-refresher slot="fixed" (ionRefresh)="cargar($event)"><ion-refresher-content /></ion-refresher>
+  <div class="pagina">
+    <button class="boton-icono" type="button" aria-label="Volver" (click)="volver()"><ion-icon name="arrow-back" /></button>
+    <header class="pagina-titulo">
+      <h1>Revisión</h1>
+      <p>Confirma lo que la IA no supo y revisa las fichas nuevas.</p>
+    </header>
+
+    <div class="segmento">
+      <button type="button" [class.activo]="pestana() === 'observaciones'" (click)="pestana.set('observaciones')">
+        Observaciones · {{ observaciones()?.length ?? '…' }}
+      </button>
+      <button type="button" [class.activo]="pestana() === 'especies'" (click)="pestana.set('especies')">
+        Fichas de la IA · {{ especies()?.length ?? '…' }}
+      </button>
+    </div>
+
+    @if (pestana() === 'observaciones') {
+      @for (o of observaciones(); track o.id) {
+        <article class="tarjeta revision">
+          <div class="arriba">
+            <app-foto class="foto" [src]="urls()[o.ruta_foto]" [diferida]="false" />
+            <div class="info">
+              <span class="chip" [class.acento]="o.estado === 'revisar'" [class.info]="o.estado === 'elegida'">
+                {{ o.estado === 'revisar' ? 'La IA dudó' : 'Elegida por la persona' }}
+              </span>
+              <strong>{{ o.especie?.nombre_comun ?? o.ia_nombre_sugerido ?? 'Sin sugerencia' }}</strong>
+              <span class="texto-2">{{ o.perfil?.nombre_usuario || 'Invitado' }} · {{ fechaCorta(o.creado_en) }}</span>
+              @if (o.ia_explicacion) { <p>{{ o.ia_explicacion }}</p> }
+            </div>
+          </div>
+          <div class="opciones">
+            @if (o.especie) {
+              <button class="boton pequeno" type="button" (click)="confirmar(o, o.especie.id)"><ion-icon name="checkmark" />Confirmar {{ o.especie.nombre_comun }}</button>
+            }
+            @for (c of o.ia_candidatos; track c.nombre_cientifico) {
+              @if (c.especie_id && c.especie_id !== o.especie?.id) {
+                <button class="boton pequeno secundario" type="button" (click)="confirmar(o, c.especie_id)">{{ c.nombre_comun || c.nombre_cientifico }} · {{ porcentaje(c.confianza) }}</button>
+              }
+            }
+            <button class="boton pequeno secundario" type="button" (click)="abrirBusqueda(o)"><ion-icon name="search-outline" />Otra especie</button>
+            <button class="boton pequeno peligro" type="button" (click)="noIdentificable(o)">No identificable</button>
+          </div>
+          @if (buscando() === o.id) {
+            <form class="buscar" (ngSubmit)="buscar()">
+              <label class="buscador"><ion-icon name="search-outline" /><input name="q" [(ngModel)]="textoBusqueda" placeholder="Nombre común o científico" /></label>
+              <button class="boton pequeno" type="submit">Buscar</button>
+            </form>
+            @for (r of resultados(); track r.id) {
+              <button class="resultado" type="button" (click)="confirmar(o, r.id)">
+                <strong>{{ r.nombre_comun }}</strong><span class="cientifico">{{ r.nombre_cientifico }}</span>
+              </button>
+            }
+          }
+        </article>
+      } @empty {
+        <div class="vacio"><div class="icono-vacio"><ion-icon name="checkmark-done-outline" /></div><h3>Todo al día</h3><p>No hay observaciones por revisar.</p></div>
+      }
+    } @else {
+      @for (e of especies(); track e.id) {
+        <article class="tarjeta revision">
+          @if (editando()?.id === e.id) {
+            @let ed = editando()!;
+            <form class="editar" (ngSubmit)="guardarEspecie(false)">
+              <span class="cientifico">{{ e.nombre_cientifico }}</span>
+              <label class="campo">Nombre común<input name="comun" [(ngModel)]="ed.nombre_comun" /></label>
+              <label class="campo">Familia<input name="familia" [(ngModel)]="ed.familia" /></label>
+              <label class="campo">Descripción<textarea name="descripcion" [(ngModel)]="ed.descripcion"></textarea></label>
+              <label class="campo">Hábitat<input name="habitat" [(ngModel)]="ed.habitat" /></label>
+              <label class="campo">Alimentación<input name="alimentacion" [(ngModel)]="ed.alimentacion" /></label>
+              <label class="campo">Tamaño<input name="tamano" [(ngModel)]="ed.tamano" /></label>
+              <div class="opciones">
+                <button class="boton pequeno" type="button" (click)="guardarEspecie(true)"><ion-icon name="checkmark" />Guardar y verificar</button>
+                <button class="boton pequeno secundario" type="submit">Solo guardar</button>
+                <button class="boton pequeno fantasma" type="button" (click)="editando.set(null)">Cancelar</button>
+              </div>
+            </form>
+          } @else {
+            <div class="arriba">
+              <app-foto class="foto" [src]="e.imagen_url" [icono]="iconoEspecie(e)" />
+              <div class="info">
+                <span class="chip neutro">{{ nombreGrupo(e.grupo) }}{{ e.gbif_id ? ' · GBIF ✓' : ' · sin validar en GBIF' }}</span>
+                <strong>{{ e.nombre_comun }}</strong>
+                <span class="cientifico">{{ e.nombre_cientifico }}</span>
+                <p>{{ e.descripcion || 'Sin descripción todavía.' }}</p>
+              </div>
+            </div>
+            <div class="opciones">
+              <button class="boton pequeno" type="button" (click)="editar(e)"><ion-icon name="create-outline" />Revisar ficha</button>
+              <a class="boton pequeno secundario" [routerLink]="['/especie', e.id]">Ver</a>
+              <button class="boton pequeno peligro" type="button" (click)="borrarEspecie(e)">Borrar</button>
+            </div>
+          }
+        </article>
+      } @empty {
+        <div class="vacio"><div class="icono-vacio"><ion-icon name="checkmark-done-outline" /></div><h3>Todo al día</h3><p>No hay fichas pendientes.</p></div>
+      }
+    }
+  </div>
+</ion-content>

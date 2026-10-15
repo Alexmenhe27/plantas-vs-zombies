@@ -2,9 +2,10 @@ import { TestBed } from '@angular/core/testing';
 import { FotoComponent } from './foto.component';
 
 describe('FotoComponent', () => {
-  function crear(src: string | null) {
+  function crear(src: string | null, respaldo: string | null = null) {
     const f = TestBed.createComponent(FotoComponent);
     f.componentRef.setInput('src', src);
+    f.componentRef.setInput('respaldo', respaldo);
     f.detectChanges();
     return f;
   }
@@ -29,5 +30,12 @@ describe('FotoComponent', () => {
     f.detectChanges();
     expect(f.nativeElement.querySelector('img')).toBeNull();
     expect(f.nativeElement.querySelector('.respaldo')).not.toBeNull();
+  });
+
+  it('si la miniatura no existe usa la foto completa', () => {
+    const f = crear('https://ejemplo.mx/a.mini.jpg', 'https://ejemplo.mx/a.jpg');
+    f.nativeElement.querySelector('img').dispatchEvent(new Event('error'));
+    f.detectChanges();
+    expect(f.nativeElement.querySelector('img').getAttribute('src')).toBe('https://ejemplo.mx/a.jpg');
   });
 });

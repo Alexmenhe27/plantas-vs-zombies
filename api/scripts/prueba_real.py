@@ -1,12 +1,13 @@
-"""Prueba de punta a punta contra tu Supabase y Gemini reales, igual que lo hace la app.
+"""Prueba de punta a punta contra tu Supabase y Claude reales, igual que lo hace la app.
 
 Crea un usuario temporal, inicia sesión, sube una foto, llama a POST /identificar de la API
-(que debe estar corriendo) y al final borra todo lo que creó. Gasta 1 identificación de Gemini.
+(que debe estar corriendo) y al final borra todo lo que creó. Gasta 1 identificación de Claude (menos de un centavo de dólar).
 
 Uso (desde api/, con la API corriendo en otra terminal):
     python -m scripts.prueba_real ruta/a/foto.jpg [http://localhost:8000]
 """
 import asyncio
+import json
 import re
 import secrets
 import sys
@@ -57,20 +58,41 @@ async def main(foto: str, api: str) -> int:
             print("3. Foto subida al bucket privado")
 
             inicio = time.monotonic()
-            r = await http.post(f"{api}/identificar", headers={"Authorization": f"Bearer {token}", "Origin": "http://localhost:4200"},
-                                json={"ruta_foto": ruta, "latitud": 19.04, "longitud": -98.2}, timeout=180)
-            print(f"4. POST /identificar -> {r.status_code} en {time.monotonic() - inicio:.1f} s"
-                  f" (CORS: {r.headers.get('access-control-allow-origin')})")
-            if r.status_code != 200:
-                print("   Respuesta:", r.text[:500])
+            resultado, momentos = None, {}
+            async with http.stream("POST", f"{api}/identificar", timeout=180,
+                                   headers={"Authorization": f"Bearer {token}", "Origin": "http://localhost:4200",
+                                            "Accept": "application/x-ndjson"},
+                                   json={"ruta_foto": ruta, "latitud": 19.04, "longitud": -98.2}) as r:
+                print(f"4. POST /identificar -> {r.status_code} (CORS: {r.headers.get('access-control-allow-origin')})")
+                if r.status_code != 200:
+                    print("   Respuesta:", (await r.aread()).decode()[:500])
+                    return 1
+                async for linea in r.aiter_lines():
+                    if not linea.strip():
+                        continue
+                    evento = json.loads(linea)
+                    ahora = time.monotonic() - inicio
+                    if evento["tipo"] == "parcial" and evento.get("nombre_comun"):
+                        momentos.setdefault("nombre visible", ahora)
+                    elif evento["tipo"] == "resultado":
+                        momentos["resultado guardado"], resultado = ahora, evento
+                    elif evento["tipo"] == "ficha":
+                        momentos["ficha de especie nueva"] = ahora
+                    elif evento["tipo"] == "error":
+                        print("   Error:", evento["mensaje"])
+                        return 1
+                    elif evento["tipo"] == "fin":
+                        print("   Tiempos en la API (ms):", evento["tiempos"])
+            print("   " + " · ".join(f"{k} a los {v:.1f} s" for k, v in momentos.items()))
+            if not resultado:
                 return 1
-            obs = r.json()["observacion"]
+            obs = resultado["observacion"]
             obs_id = obs["id"]
             esp = obs.get("especie") or {}
             if esp and not esp.get("verificada", True):
                 especie_nueva = esp["id"]
             print(f"   Estado: {obs['estado']} · {obs['ia_nombre_sugerido']} · confianza {obs['ia_confianza']}")
-            print(f"   Restantes hoy: {r.json()['restantes']}")
+            print(f"   Restantes hoy: {resultado['restantes']} de {resultado['limite']}")
 
             r = await http.get(f"{sb}/rest/v1/observaciones", params={"select": "id", "id": f"eq.{obs_id}"},
                                headers={"apikey": publica, "Authorization": f"Bearer {token}"})

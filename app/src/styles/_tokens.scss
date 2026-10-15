@@ -1,0 +1,144 @@
+/* Sistema de diseño "guía de campo moderna": colores, tipografía, espacios y sombras.
+   Todo se define aquí como variables; el modo oscuro solo cambia los valores. */
+
+:root {
+  /* Superficies (papel cálido) */
+  --c-fondo: #f5f3ec;
+  --c-superficie: #ffffff;
+  --c-superficie-2: #efece2;
+  --c-superficie-3: #e5e1d4;
+  --c-borde: #e4e0d3;
+  --c-borde-fuerte: #cdc7b5;
+
+  /* Texto */
+  --c-texto: #18201b;
+  --c-texto-2: #4c5952;
+  --c-texto-3: #78837c;
+
+  /* Marca: verde musgo + maíz */
+  --c-primario: #1f6b4f;
+  --c-primario-fuerte: #12452f;
+  --c-primario-suave: #dbeee3;
+  --c-primario-texto: #145a40;
+  --c-sobre-primario: #ffffff;
+  --c-acento: #e39b2d;
+  --c-acento-suave: #fbebcf;
+  --c-acento-texto: #84500b;
+
+  /* Estados */
+  --c-peligro: #c2412d;
+  --c-peligro-suave: #fbe2dc;
+  --c-peligro-texto: #972a19;
+  --c-info: #2f6fa8;
+  --c-info-suave: #e0ebf6;
+  --c-info-texto: #1f5486;
+  --c-exito: #2b9767;
+
+  /* Un color por grupo (fondo suave + tinta) */
+  --g-ave: #3a76b3;        --g-ave-suave: #e2ecf7;
+  --g-mamifero: #a3653a;   --g-mamifero-suave: #f5e8de;
+  --g-reptil: #6b8732;     --g-reptil-suave: #ecf1df;
+  --g-anfibio: #1d9584;    --g-anfibio-suave: #dcf1ee;
+  --g-insecto: #c9721c;    --g-insecto-suave: #f9ead9;
+  --g-pez: #2a62a6;        --g-pez-suave: #dfe9f6;
+  --g-planta: #3b8a4d;     --g-planta-suave: #e1f0e4;
+  --g-invertebrado: #8458b8; --g-invertebrado-suave: #eee6f7;
+
+  /* Sombras, radios y movimiento */
+  --sombra-1: 0 1px 2px rgba(24, 32, 27, .06), 0 1px 1px rgba(24, 32, 27, .04);
+  --sombra-2: 0 8px 24px rgba(18, 69, 47, .10);
+  --sombra-3: 0 18px 44px rgba(18, 69, 47, .18);
+  --radio-s: 12px;
+  --radio-m: 18px;
+  --radio-l: 24px;
+  --radio-xl: 32px;
+  --curva: cubic-bezier(.2, .8, .2, 1);
+
+  /* Tipografía (incluida en la app: funciona sin internet) */
+  --fuente: 'Manrope Variable', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  --fuente-titulo: 'Fraunces Variable', Georgia, 'Times New Roman', serif;
+
+  /* Ionic */
+  --ion-font-family: var(--fuente);
+  --ion-background-color: var(--c-fondo);
+  --ion-background-color-rgb: 245, 243, 236;
+  --ion-text-color: var(--c-texto);
+  --ion-text-color-rgb: 24, 32, 27;
+  --ion-color-primary: #1f6b4f;
+  --ion-color-primary-rgb: 31, 107, 79;
+  --ion-color-primary-contrast: #ffffff;
+  --ion-color-primary-contrast-rgb: 255, 255, 255;
+  --ion-color-primary-shade: #1b5e46;
+  --ion-color-primary-tint: #357a61;
+  --ion-color-secondary: #e39b2d;
+  --ion-color-secondary-rgb: 227, 155, 45;
+  --ion-color-secondary-contrast: #2e1b02;
+  --ion-color-secondary-contrast-rgb: 46, 27, 2;
+  --ion-color-secondary-shade: #c88828;
+  --ion-color-secondary-tint: #e6a542;
+  --ion-item-background: var(--c-superficie);
+  --ion-toolbar-background: var(--c-fondo);
+  --ion-card-background: var(--c-superficie);
+  --ion-color-step-50: #ebe8de;
+  --ion-color-step-100: #e2ded2;
+}
+
+/* Modo oscuro: lo activa TemaService con la clase ion-palette-dark en <html> (según el sistema o la preferencia). */
+:root.ion-palette-dark {
+  --c-fondo: #0e1411;
+  --c-superficie: #151d19;
+  --c-superficie-2: #1b2520;
+  --c-superficie-3: #24302a;
+  --c-borde: #26322c;
+  --c-borde-fuerte: #384640;
+
+  --c-texto: #e8eee9;
+  --c-texto-2: #b0bdb5;
+  --c-texto-3: #85948b;
+
+  --c-primario: #5ec79b;
+  --c-primario-fuerte: #93e3c0;
+  --c-primario-suave: #18342a;
+  --c-primario-texto: #8fdfbc;
+  --c-sobre-primario: #062319;
+  --c-acento: #f1b549;
+  --c-acento-suave: #36290f;
+  --c-acento-texto: #f6cc7b;
+
+  --c-peligro: #ef7a64;
+  --c-peligro-suave: #3a1f19;
+  --c-peligro-texto: #f6a595;
+  --c-info: #78b2e8;
+  --c-info-suave: #172a3c;
+  --c-info-texto: #a5ccf1;
+  --c-exito: #5ec79b;
+
+  --g-ave: #7fb2e6;        --g-ave-suave: #182838;
+  --g-mamifero: #dca27a;   --g-mamifero-suave: #33241a;
+  --g-reptil: #a9c46b;     --g-reptil-suave: #232c16;
+  --g-anfibio: #5fd0c0;    --g-anfibio-suave: #13302c;
+  --g-insecto: #f0a75a;    --g-insecto-suave: #352512;
+  --g-pez: #7aa8e3;        --g-pez-suave: #172638;
+  --g-planta: #7cc58a;     --g-planta-suave: #172d1c;
+  --g-invertebrado: #bf9ae8; --g-invertebrado-suave: #2a2038;
+
+  --sombra-1: 0 1px 2px rgba(0, 0, 0, .4);
+  --sombra-2: 0 8px 24px rgba(0, 0, 0, .35);
+  --sombra-3: 0 18px 44px rgba(0, 0, 0, .5);
+
+  --ion-background-color: var(--c-fondo);
+  --ion-background-color-rgb: 14, 20, 17;
+  --ion-text-color: var(--c-texto);
+  --ion-text-color-rgb: 232, 238, 233;
+  --ion-color-primary: #5ec79b;
+  --ion-color-primary-rgb: 94, 199, 155;
+  --ion-color-primary-contrast: #062319;
+  --ion-color-primary-contrast-rgb: 6, 35, 25;
+  --ion-color-primary-shade: #53af88;
+  --ion-color-primary-tint: #6ecda5;
+  --ion-item-background: var(--c-superficie);
+  --ion-toolbar-background: var(--c-fondo);
+  --ion-card-background: var(--c-superficie);
+  --ion-color-step-50: #1b2520;
+  --ion-color-step-100: #24302a;
+}

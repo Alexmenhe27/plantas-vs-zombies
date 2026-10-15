@@ -1,0 +1,137 @@
+<section class="panel" [style]="estilo()">
+  @switch (vista()) {
+    @case ('esperando') {
+      <div class="esperando" aria-live="polite">
+        <span class="esqueleto linea-titulo"></span>
+        <span class="esqueleto linea-sub"></span>
+        <p class="consejo"><ion-icon name="sparkles-outline" />{{ consejo() }}</p>
+      </div>
+    }
+
+    @case ('problema') {
+      @let o = observacion();
+      <div class="problema aparece">
+        <div class="icono-problema"><ion-icon [name]="problema() === 'borrosa' ? 'eye-off-outline' : 'search-outline'" /></div>
+        <span class="chip peligro">{{ problema() === 'borrosa' ? 'Foto poco clara' : 'Sin animal ni planta' }}</span>
+        <h1>{{ problema() === 'borrosa' ? 'La foto salió borrosa' : 'No encontramos un animal o una planta' }}</h1>
+        @if (explicacion()) { <p class="texto">{{ explicacion() }}</p> }
+        <ul class="consejos">
+          @if (problema() === 'borrosa') {
+            <li><ion-icon name="hand-left-outline" />Sostén el teléfono firme con las dos manos.</li>
+            <li><ion-icon name="sunny-outline" />Busca más luz, sin el sol de frente.</li>
+            <li><ion-icon name="scan-outline" />Toca la pantalla sobre el animal o la planta para enfocar.</li>
+          } @else {
+            <li><ion-icon name="scan-outline" />Deja al animal o la planta grande y al centro.</li>
+            <li><ion-icon name="footsteps-outline" />Acércate lo más que puedas sin molestarlo.</li>
+          }
+        </ul>
+        @if (o) { <p class="nota">Esta foto no cuenta en tu colección.</p> }
+      </div>
+    }
+
+    @default {
+      <!-- llegando, identificada, elegida, corregida y revisar -->
+      @let e = especie();
+      @let v = vista();
+      <div class="chips">
+        @if (grupoVista(); as g) { <span class="chip grupo"><ion-icon [name]="iconoEspecie(g)" />{{ nombreGrupo(g.grupo) }}</span> }
+        @if (conservacion() && v !== 'revisar') { <span class="chip acento"><ion-icon name="shield-checkmark-outline" />{{ conservacion() }}</span> }
+        @if (v === 'elegida') { <span class="chip info"><ion-icon name="hand-left-outline" />Elegida por ti</span> }
+        @if (v === 'corregida') { <span class="chip"><ion-icon name="ribbon-outline" />Revisada por un experto</span> }
+        @if (v === 'revisar') { <span class="chip acento"><ion-icon name="help-circle-outline" />La IA no está segura</span> }
+      </div>
+
+      @if (v === 'revisar') {
+        <h1 class="aparece">¿Cuál de estas es?</h1>
+        <p class="texto">{{ explicacion() || 'La foto no muestra con claridad los rasgos que distinguen a estas especies.' }}</p>
+      } @else {
+        <div class="nombres aparece">
+          <div class="textos">
+            <h1>{{ nombreComun() }}</h1>
+            @if (nombreCientifico()) { <span class="cientifico">{{ nombreCientifico() }}</span> }
+          </div>
+          @if (e?.imagen_url) {
+            <a class="referencia" [routerLink]="['/especie', e!.id]" aria-label="Ver la ficha con la foto de referencia">
+              <app-foto [src]="e!.imagen_url" [icono]="iconoEspecie(e!)" [diferida]="false" />
+              <span>Referencia</span>
+            </a>
+          }
+        </div>
+      }
+
+      @if (confianza() !== null && v !== 'corregida' && v !== 'revisar' && v !== 'elegida') {
+        <div class="confianza aparece" [class.media]="tonoConfianza() === 'media'" [class.baja]="tonoConfianza() === 'baja'">
+          <div class="fila"><span>Confianza de la IA</span><strong>{{ nivelConfianza(confianza()) }} · {{ porcentaje(confianza()) }}</strong></div>
+          <div class="barra-progreso"><div [style.width.%]="(confianza() ?? 0) * 100"></div></div>
+        </div>
+      }
+
+      @if (v === 'revisar') {
+        @if (candidatos().length) {
+          <div class="candidatos">
+            @for (c of candidatos(); track c.cientifico) {
+              <div class="candidato aparece" [style]="estiloCandidato(c)" [class.elegido]="elegido() === c.cientifico">
+                <app-foto class="mini" [src]="fotoCandidato(c)" [icono]="iconoCandidato(c)" />
+                <div class="nombre-candidato">
+                  <strong>{{ c.comun || c.cientifico }}</strong>
+                  <span class="cientifico">{{ c.cientifico }}</span>
+                  <span class="parecido">{{ porcentaje(c.confianza) }} de parecido</span>
+                </div>
+                @if (puedeElegir()) {
+                  <button class="boton pequeno suave" type="button" [disabled]="eligiendo()" (click)="confirmar(c)">
+                    @if (eligiendo() && elegido() === c.cientifico) { <ion-spinner name="crescent" /> } @else { Es esta }
+                  </button>
+                } @else if (c.especie) {
+                  <a class="boton pequeno secundario" [routerLink]="['/especie', c.especie.id]">Ver</a>
+                }
+              </div>
+            }
+          </div>
+        }
+        <p class="aviso acento"><ion-icon name="information-circle-outline" />
+          <span>{{ puedeElegir() ? 'Compara con tu foto y elige la que sea. Si ninguna es, déjala así: queda en revisión para un experto.' :
+            'Queda en revisión: un experto de la app la confirmará.' }}</span>
+        </p>
+      }
+
+      @if (v === 'llegando') {
+        <p class="guardando"><ion-spinner name="dots" />Guardando en tu colección…</p>
+      }
+
+      @if (e && v !== 'revisar') {
+        @if (fichaPendiente() && !e.descripcion) {
+          <div class="datos aparece" aria-label="Preparando la ficha">
+            <div><span class="esqueleto" style="height: 12px; width: 50%"></span><span class="esqueleto" style="height: 16px; width: 80%; margin-top: 8px"></span></div>
+            <div><span class="esqueleto" style="height: 12px; width: 50%"></span><span class="esqueleto" style="height: 16px; width: 80%; margin-top: 8px"></span></div>
+            <p class="preparando"><ion-icon name="sparkles-outline" />Es una especie nueva en el catálogo: estamos preparando su ficha.</p>
+          </div>
+        } @else {
+          @if (e.tamano || e.alimentacion || e.habitat) {
+            <dl class="datos aparece">
+              @if (e.tamano) { <div><dt><ion-icon name="resize-outline" />Tamaño</dt><dd>{{ e.tamano }}</dd></div> }
+              @if (e.alimentacion) { <div><dt><ion-icon name="restaurant-outline" />Alimentación</dt><dd>{{ e.alimentacion }}</dd></div> }
+              @if (e.habitat) { <div class="ancho"><dt><ion-icon name="map-outline" />Hábitat</dt><dd>{{ e.habitat }}</dd></div> }
+            </dl>
+          }
+          @if (e.descripcion) { <p class="texto aparece">{{ e.descripcion }}</p> }
+        }
+        @if (textoNom()) {
+          <p class="aviso acento"><ion-icon name="shield-checkmark-outline" /><span>{{ textoNom() }} En lo público no se muestra su ubicación, para protegerla.</span></p>
+        } @else if (e.introducida) {
+          <p class="aviso"><ion-icon name="earth-outline" /><span>Especie introducida: no es originaria de México.</span></p>
+        }
+      }
+
+      @if (explicacion() && v !== 'revisar') {
+        <div class="por-que aparece">
+          <h2><ion-icon name="sparkles-outline" />¿Por qué creemos que es esta especie?</h2>
+          <p>{{ explicacion() }}</p>
+        </div>
+      }
+      @if (e && !e.verificada && v !== 'revisar') {
+        <p class="nota">Ficha generada por la IA a partir de las fotos de la comunidad; puede tener errores.</p>
+      }
+    }
+  }
+  <ng-content />
+</section>

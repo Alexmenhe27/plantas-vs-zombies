@@ -1,31 +1,40 @@
 import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { Router, RouterLink } from '@angular/router';
-import { IonContent, IonIcon } from '@ionic/angular';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
+import { IonContent, IonIcon, IonSpinner } from '@ionic/angular';
 import { SupabaseService } from '../core/supabase.service';
+import { MarcaComponent } from '../shared/marca.component';
 import { ESTILOS_ACCESO } from './auth.styles';
 
-/** Se abre desde el enlace del correo de recuperación (Supabase deja una sesión temporal). */
+/** Elegir contraseña: al recuperar la cuenta o cuando un invitado confirma su correo al crear su cuenta (?alta=1). */
 @Component({
   selector: 'app-nueva-contrasena',
-  imports: [IonContent, IonIcon, FormsModule, RouterLink],
+  imports: [FormsModule, IonContent, IonIcon, IonSpinner, MarcaComponent, RouterLink],
   template: `
     <ion-content>
       <header class="cabecera">
-        <div class="marca"><ion-icon name="leaf-outline" /></div>
-        <h1>Nueva contraseña</h1>
-        <p>Escribe la contraseña que usarás a partir de ahora.</p>
+        <div class="arriba"><span></span><app-marca [tamano]="38" /></div>
+        <h1>{{ alta ? '¡Correo confirmado!' : 'Nueva contraseña' }}</h1>
+        <p>{{ alta ? 'Elige una contraseña para entrar a tu cuenta desde cualquier dispositivo.' : 'Escribe tu nueva contraseña.' }}</p>
       </header>
-      @if (sb.session()) {
-        <form (ngSubmit)="guardar()">
-          <label>Nueva contraseña (mínimo 6 caracteres)
-            <input type="password" name="password" autocomplete="new-password" required minlength="6" [(ngModel)]="password" />
-          </label>
-          @if (error()) { <p class="error" role="alert">{{ error() }}</p> }
-          <button class="boton" type="submit" [disabled]="cargando()">Guardar contraseña</button>
-        </form>
+      @if (!sb.session()) {
+        <div class="tarjeta-acceso">
+          <p class="error-formulario">El enlace venció o ya se usó. Pide uno nuevo.</p>
+          <a class="boton" routerLink="/recuperar">Pedir un enlace nuevo</a>
+        </div>
       } @else {
-        <form><p class="error">El enlace no es válido o ya venció. Pide uno nuevo.</p><a class="boton" routerLink="/recuperar">Pedir otro enlace</a></form>
+        <form (ngSubmit)="guardar()">
+          <label class="campo clave">Contraseña (mínimo 6 caracteres)
+            <input [type]="verClave() ? 'text' : 'password'" name="password" autocomplete="new-password" required minlength="6" [(ngModel)]="password" />
+            <button class="ver" type="button" [attr.aria-label]="verClave() ? 'Ocultar contraseña' : 'Mostrar contraseña'" (click)="verClave.set(!verClave())">
+              <ion-icon [name]="verClave() ? 'eye-off-outline' : 'eye-outline'" />
+            </button>
+          </label>
+          @if (error()) { <p class="error-formulario" role="alert">{{ error() }}</p> }
+          <button class="boton" type="submit" [disabled]="cargando()">
+            @if (cargando()) { <ion-spinner name="crescent" /> } Guardar contraseña
+          </button>
+        </form>
       }
     </ion-content>
   `,
@@ -35,9 +44,11 @@ import { ESTILOS_ACCESO } from './auth.styles';
 export class NuevaContrasenaPage {
   readonly sb = inject(SupabaseService);
   private readonly router = inject(Router);
+  readonly alta = inject(ActivatedRoute).snapshot.queryParamMap.has('alta');
   password = '';
   readonly cargando = signal(false);
   readonly error = signal('');
+  readonly verClave = signal(false);
 
   async guardar(): Promise<void> {
     if (this.password.length < 6) {
@@ -47,7 +58,7 @@ export class NuevaContrasenaPage {
     this.cargando.set(true);
     try {
       await this.sb.cambiarContrasena(this.password);
-      await this.router.navigateByUrl('/app/identificar', { replaceUrl: true });
+      await this.router.navigateByUrl('/app/inicio', { replaceUrl: true });
     } catch (e) {
       this.error.set((e as Error).message);
     } finally {

@@ -20,6 +20,7 @@ create table auth.users (
   email text unique,
   encrypted_password text,
   raw_user_meta_data jsonb default '{}',
+  is_anonymous boolean not null default false,
   created_at timestamptz default now()
 );
 create function auth.uid() returns uuid language sql stable as $$
@@ -28,6 +29,11 @@ create function auth.uid() returns uuid language sql stable as $$
     nullif(current_setting('request.jwt.claims', true), '')::jsonb ->> 'sub'
   )::uuid
 $$;
+
+create function auth.jwt() returns jsonb language sql stable as $$
+  select coalesce(nullif(current_setting('request.jwt.claims', true), ''), '{}')::jsonb
+$$;
+create schema if not exists extensions;
 
 create schema storage;
 grant usage on schema storage to anon, authenticated, service_role;

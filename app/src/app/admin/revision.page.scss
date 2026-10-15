@@ -1,0 +1,13 @@
+.revision { display: flex; flex-direction: column; gap: 12px; }
+.arriba { display: flex; gap: 12px; }
+.foto { width: 96px; height: 96px; border-radius: 16px; }
+.info { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 4px; align-items: flex-start; }
+.info strong { font-size: 16px; }
+.info .texto-2 { font-size: 13px; }
+.info p { margin: 2px 0 0; font-size: 13.5px; line-height: 1.45; color: var(--c-texto-2); }
+.opciones { display: flex; flex-wrap: wrap; gap: 8px; }
+.buscar { display: flex; gap: 8px; }
+.buscar .buscador { flex: 1; }
+.buscar input { min-height: 44px; }
+.resultado { display: flex; flex-direction: column; align-items: flex-start; gap: 2px; padding: 10px 12px; border-radius: 12px; border: 1px solid var(--c-borde); background: var(--c-superficie-2); font: inherit; color: var(--c-texto); text-align: left; cursor: pointer; }
+.editar { display: flex; flex-direction: column; gap: 10px; }

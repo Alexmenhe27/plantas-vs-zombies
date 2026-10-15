@@ -1,23 +1,90 @@
 <ion-content>
-  <header>
-    <div class="avatar">{{ (sb.perfil()?.nombre_usuario || email() || '?').charAt(0).toUpperCase() }}</div>
-    @if (editando()) {
-      <form class="editar" (ngSubmit)="guardar()">
-        <input name="username" aria-label="Nombre de usuario" [(ngModel)]="username" maxlength="30" />
-        <button class="boton" type="submit">Guardar</button>
-      </form>
-    } @else {
-      <h1>{{ sb.perfil()?.nombre_usuario || 'Sin nombre de usuario' }}</h1>
-      <button class="enlace" type="button" (click)="editar()">Cambiar nombre de usuario</button>
+  <div class="pagina">
+    <header class="cabecera tarjeta">
+      <div class="avatar">{{ sb.esInvitado() ? '?' : (sb.perfil()?.nombre_usuario || email() || '?').charAt(0).toUpperCase() }}</div>
+      <div class="quien">
+        @if (sb.esInvitado()) {
+          <h1>Sin cuenta</h1>
+          <span class="texto-2">Estás usando la app como invitado</span>
+        } @else if (editando()) {
+          <form class="editar" (ngSubmit)="guardar()">
+            <input class="campo-usuario" name="username" aria-label="Nombre de usuario" [(ngModel)]="username" maxlength="30" autocomplete="username" />
+            <button class="boton pequeno" type="submit" [disabled]="guardando()">Guardar</button>
+          </form>
+        } @else {
+          <h1>{{ sb.perfil()?.nombre_usuario || 'Sin nombre de usuario' }}</h1>
+          <span class="texto-2">{{ email() }}</span>
+          <button class="enlace" type="button" (click)="editar()">Cambiar nombre de usuario</button>
+        }
+      </div>
+      @if (sb.esAdmin()) { <span class="chip acento admin">Administrador</span> }
+    </header>
+
+    @if (cupo(); as c) {
+      <div class="fila-ajuste">
+        <span>Identificaciones de hoy<small>{{ c.sin_limite ? 'Eres administrador.' : c.invitado ? 'Sin cuenta tienes ' + c.limite + ' al día; con cuenta, más.' : 'Se renuevan 24 horas después de cada una.' }}</small></span>
+        <strong class="cupo">{{ c.sin_limite ? 'Sin límite' : c.restantes + ' / ' + c.limite }}</strong>
+      </div>
     }
-    <p class="texto-suave">{{ email() }}</p>
-    @if (sb.esAdmin()) { <span class="chip ambar">Administrador</span> }
-  </header>
-  <div class="cuerpo">
-    <div class="tarjeta fila">
-      <span>Identificaciones disponibles hoy</span>
-      <strong>{{ restantes() ?? '–' }} de {{ limite }}</strong>
-    </div>
-    <button class="boton secundario" type="button" (click)="salir()"><ion-icon name="log-out-outline" />Cerrar sesión</button>
+
+    @if (sb.esInvitado()) {
+      <section class="seccion tarjeta crear" id="crear-cuenta">
+        @if (enviado() || sb.correoPorConfirmar()) {
+          <div class="ok-formulario">
+            Te enviamos un correo a <strong>{{ sb.correoPorConfirmar() || nuevoCorreo }}</strong>. Abre el enlace para confirmarlo y elegir tu contraseña.
+            Tu colección se conserva.
+          </div>
+        } @else {
+          <h2>Crea tu cuenta gratis</h2>
+          <p class="texto-2">Conserva tu colección en cualquier dispositivo y ten más identificaciones al día. No pierdes nada de lo que ya hiciste.</p>
+          <form (ngSubmit)="crearCuenta()">
+            <label class="campo">Correo electrónico
+              <input type="email" name="correo" autocomplete="email" required [(ngModel)]="nuevoCorreo" />
+            </label>
+            <label class="campo">Nombre de usuario
+              <input type="text" name="usuario" autocomplete="username" required maxlength="30" [(ngModel)]="nuevoUsuario" />
+              <small>Es el que verán los demás en tus avistamientos públicos.</small>
+            </label>
+            @if (errorCrear()) { <p class="error-formulario" role="alert">{{ errorCrear() }}</p> }
+            <button class="boton" type="submit" [disabled]="creando()">
+              @if (creando()) { <ion-spinner name="crescent" /> } @else { <ion-icon name="person-add-outline" /> }
+              Crear mi cuenta
+            </button>
+          </form>
+          <p class="texto-3 ya">¿Ya tienes cuenta? <a routerLink="/entrar">Inicia sesión</a></p>
+        }
+      </section>
+    }
+
+    <section class="seccion">
+      <h2 class="subtitulo">Ajustes</h2>
+      @if (!sb.esInvitado()) {
+        <label class="fila-ajuste">
+          <span>Publicar mis observaciones nuevas<small>Si lo activas, otras personas las verán en la ficha de cada especie, con ubicación aproximada. Siempre puedes cambiarlo en cada una.</small></span>
+          <ion-toggle [checked]="sb.perfil()?.publicar_por_defecto ?? false" (ionChange)="cambiarPublicar($event)" aria-label="Publicar mis observaciones nuevas" />
+        </label>
+      }
+      <label class="fila-ajuste">
+        <span>Usar mi ubicación<small>Ayuda a la IA a acertar. Tu ubicación exacta solo la ves tú.</small></span>
+        <ion-toggle [checked]="ubicacion.permitida()" (ionChange)="cambiarUbicacion($event)" aria-label="Usar mi ubicación" />
+      </label>
+    </section>
+
+    @if (sb.esAdmin()) {
+      <a class="item" routerLink="/revision">
+        <ion-icon name="ribbon-outline" class="icono-item" />
+        <div class="texto"><strong>Panel de revisión</strong><span class="texto-2">Observaciones y fichas por confirmar</span></div>
+        <ion-icon name="chevron-forward" class="flecha" />
+      </a>
+    }
+
+    <section class="seccion cuenta">
+      <button class="boton secundario" type="button" (click)="salir()"><ion-icon name="log-out-outline" />Cerrar sesión</button>
+    </section>
+
+    <footer class="pie texto-3">
+      <app-marca [tamano]="28" [conNombre]="true" />
+      <span>Identificación con IA · Catálogo validado con GBIF</span>
+    </footer>
   </div>
 </ion-content>

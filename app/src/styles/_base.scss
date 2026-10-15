@@ -1,0 +1,65 @@
+/* Tipografía y comportamiento general */
+
+html {
+  font-family: var(--fuente);
+  -webkit-text-size-adjust: 100%;
+}
+
+body {
+  background: var(--c-fondo);
+  color: var(--c-texto);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+h1, h2, h3, .titulo {
+  font-family: var(--fuente-titulo);
+  font-weight: 640;
+  letter-spacing: -0.015em;
+  line-height: 1.15;
+  color: var(--c-texto);
+}
+
+/* Los nombres científicos se escriben en cursiva (convención de la biología). */
+.cientifico {
+  font-family: var(--fuente-titulo);
+  font-style: italic;
+  font-weight: 450;
+  color: var(--c-texto-2);
+}
+
+a { color: var(--c-primario-texto); }
+
+button { font-family: inherit; }
+
+:focus-visible {
+  outline: 3px solid var(--c-acento);
+  outline-offset: 2px;
+  border-radius: 6px;
+}
+
+::selection { background: var(--c-acento-suave); }
+
+/* Respeta "reducir movimiento" del sistema. */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: .01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: .01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* En pantallas anchas (computadora) la app se muestra como columna de teléfono:
+   las fotos conservan las proporciones del diseño en vez de estirarse a todo el ancho. */
+@media (min-width: 640px) {
+  body { background: var(--c-superficie-3); }
+  ion-app { max-width: 480px; margin: 0 auto; box-shadow: 0 0 60px rgba(0, 0, 0, .14); }
+}
+
+/* Los modales y avisos de Ionic con la tipografía y colores de la app */
+ion-toast { --border-radius: 14px; font-weight: 600; }
+ion-alert {
+  --background: var(--c-superficie);
+  .alert-title { font-family: var(--fuente-titulo) !important; font-weight: 640 !important; }
+}

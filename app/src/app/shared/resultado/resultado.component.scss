@@ -1,0 +1,67 @@
+:host { display: block; }
+.panel {
+  position: relative; margin-top: -28px; padding: 22px 20px 28px;
+  background: var(--c-fondo); border-radius: var(--radio-xl) var(--radio-xl) 0 0;
+  display: flex; flex-direction: column; gap: 16px;
+}
+h1 { margin: 0; font-size: 31px; }
+h2 { margin: 0; font-size: 16px; font-family: var(--fuente); font-weight: 800; letter-spacing: 0; display: flex; align-items: center; gap: 6px; }
+.chips { display: flex; flex-wrap: wrap; gap: 8px; min-height: 25px; }
+.texto { margin: 0; font-size: 15.5px; line-height: 1.6; color: var(--c-texto-2); }
+.nota { margin: 0; font-size: 13px; color: var(--c-texto-3); line-height: 1.5; }
+.aviso { margin: 0; }
+
+.esperando { display: flex; flex-direction: column; gap: 12px; padding-top: 6px; }
+.linea-titulo { height: 30px; width: 70%; }
+.linea-sub { height: 18px; width: 45%; }
+.consejo { margin: 8px 0 0; display: flex; gap: 10px; align-items: flex-start; font-size: 15px; line-height: 1.5; color: var(--c-texto-2); }
+.consejo ion-icon { font-size: 20px; color: var(--c-acento); flex: none; margin-top: 2px; }
+
+.nombres { display: flex; align-items: center; gap: 14px; }
+.textos { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 4px; }
+.textos .cientifico { font-size: 18px; }
+.referencia { flex: none; display: flex; flex-direction: column; align-items: center; gap: 4px; text-decoration: none; }
+.referencia app-foto { width: 68px; height: 68px; border-radius: 18px; border: 3px solid var(--c-superficie); box-shadow: var(--sombra-2); }
+.referencia span { font-size: 11px; font-weight: 750; color: var(--c-texto-3); }
+
+.confianza { background: var(--c-superficie); border: 1px solid var(--c-borde); border-radius: var(--radio-m); padding: 12px 14px; display: flex; flex-direction: column; gap: 9px; }
+.fila { display: flex; justify-content: space-between; gap: 8px; font-size: 14px; font-weight: 700; color: var(--c-texto-2); }
+.fila strong { color: var(--c-texto); }
+.confianza.media .barra-progreso > div { background: var(--c-acento); }
+.confianza.baja .barra-progreso > div { background: var(--c-peligro); }
+
+.datos { margin: 0; display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.datos div { background: var(--c-superficie); border: 1px solid var(--c-borde); border-radius: var(--radio-m); padding: 11px 13px; }
+.datos .ancho { grid-column: span 2; }
+.datos dt { display: flex; align-items: center; gap: 5px; font-size: 12.5px; color: var(--c-texto-3); font-weight: 750; }
+.datos dt ion-icon { font-size: 14px; color: var(--grupo, var(--c-primario)); }
+.datos dd { margin: 4px 0 0; font-size: 15px; font-weight: 750; line-height: 1.35; }
+.preparando { grid-column: span 2; margin: 0; display: flex; gap: 8px; align-items: center; font-size: 13.5px; color: var(--c-texto-2); }
+.preparando ion-icon { color: var(--c-acento); font-size: 18px; flex: none; }
+.guardando { margin: 0; display: flex; align-items: center; gap: 8px; font-size: 14px; font-weight: 650; color: var(--c-texto-2); }
+.guardando ion-spinner { width: 22px; height: 22px; color: var(--c-primario); }
+
+.por-que { display: flex; flex-direction: column; gap: 6px; padding: 14px 16px; border-radius: var(--radio-m); background: var(--grupo-suave, var(--c-primario-suave)); }
+.por-que h2 ion-icon { color: var(--grupo, var(--c-primario)); }
+.por-que p { margin: 0; font-size: 15px; line-height: 1.55; color: var(--c-texto); }
+
+.candidatos { display: flex; flex-direction: column; gap: 10px; }
+.candidato {
+  display: flex; align-items: center; gap: 12px; padding: 10px 12px 10px 10px;
+  background: var(--c-superficie); border: 1.5px solid var(--c-borde); border-radius: var(--radio-m);
+  transition: border-color .2s, box-shadow .2s;
+}
+.candidato.elegido { border-color: var(--c-primario); box-shadow: 0 0 0 3px var(--c-primario-suave); }
+.candidato .mini { width: 72px; height: 72px; border-radius: 14px; }
+.nombre-candidato { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+.nombre-candidato strong { font-size: 15.5px; line-height: 1.25; }
+.nombre-candidato .cientifico { font-size: 13.5px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.parecido { font-size: 12.5px; font-weight: 750; color: var(--grupo, var(--c-texto-3)); }
+.candidato .boton { flex: none; min-width: 84px; }
+.candidato ion-spinner { width: 20px; height: 20px; }
+
+.problema { display: flex; flex-direction: column; gap: 12px; align-items: flex-start; }
+.icono-problema { width: 64px; height: 64px; border-radius: 20px; background: var(--c-peligro-suave); color: var(--c-peligro-texto); display: flex; align-items: center; justify-content: center; font-size: 30px; }
+.consejos { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 10px; width: 100%; }
+.consejos li { display: flex; gap: 12px; align-items: center; padding: 12px 14px; border-radius: var(--radio-m); background: var(--c-superficie); border: 1px solid var(--c-borde); font-size: 15px; font-weight: 600; }
+.consejos ion-icon { font-size: 22px; color: var(--c-primario); flex: none; }

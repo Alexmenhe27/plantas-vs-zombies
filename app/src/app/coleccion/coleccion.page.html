@@ -1,0 +1,111 @@
+<ion-content>
+  <ion-refresher slot="fixed" (ionRefresh)="cargar($event)"><ion-refresher-content /></ion-refresher>
+  <div class="pagina">
+    <header class="pagina-titulo">
+      <h1>Mi colección</h1>
+      <p>Todo lo que has descubierto</p>
+    </header>
+
+    <dl class="stats tarjeta">
+      <div><dd>{{ stats().especies }}</dd><dt>Especies</dt></div>
+      <div><dd>{{ stats().observaciones }}</dd><dt>Observaciones</dt></div>
+      <div><dd>{{ stats().protegidas }}</dd><dt>Protegidas</dt></div>
+    </dl>
+
+    @if (sb.esInvitado() && stats().especies > 0) {
+      <a class="aviso acento" routerLink="/app/perfil" [queryParams]="{ crear: 1 }">
+        <ion-icon name="cloud-done-outline" />
+        <p><strong>Guarda tu colección</strong>Estás sin cuenta: si cierras sesión o borras los datos del navegador se pierde. Crea tu cuenta gratis.</p>
+      </a>
+    }
+
+    <div class="grupos-avance" role="group" aria-label="Especies por grupo">
+      @for (g of porGrupo(); track g.id) {
+        <button type="button" class="grupo" [class.activo]="grupoFiltro() === g.id" [class.vacio-grupo]="!g.total"
+                [style]="estiloGrupo({ reino: g.id === 'planta' ? 'planta' : 'animal', grupo: g.id })"
+                (click)="grupoFiltro.set(grupoFiltro() === g.id ? null : g.id); cambiarVista('especies')"
+                [attr.aria-label]="g.nombre + ': ' + g.total">
+          <span class="icono"><ion-icon [name]="g.icono" /></span>
+          <strong>{{ g.total }}</strong>
+          <small>{{ g.nombre }}</small>
+        </button>
+      }
+    </div>
+
+    <div class="segmento" role="tablist" aria-label="Vista de la colección">
+      <button type="button" role="tab" [class.activo]="vista() === 'especies'" (click)="cambiarVista('especies')">Especies</button>
+      <button type="button" role="tab" [class.activo]="vista() === 'observaciones'" (click)="cambiarVista('observaciones')">Observaciones</button>
+      <button type="button" role="tab" [class.activo]="vista() === 'mapa'" (click)="cambiarVista('mapa')">Mapa</button>
+    </div>
+
+    @if (coleccion() === null) {
+      <div class="cuadricula">@for (i of [1, 2, 3, 4]; track i) { <span class="esqueleto cargando-tarjeta"></span> }</div>
+    } @else if (error() && !coleccion()!.length) {
+      <div class="vacio">
+        <div class="icono-vacio"><ion-icon name="cloud-offline-outline" /></div>
+        <h3>No pudimos cargar tu colección</h3>
+        <p>Desliza hacia abajo para reintentar.</p>
+      </div>
+    } @else {
+      @switch (vista()) {
+        @case ('especies') {
+          @if (especiesFiltradas().length) {
+            <div class="cuadricula">
+              @for (c of especiesFiltradas(); track c.especie.id) {
+                <app-tarjeta-especie [especie]="c.especie" [foto]="urls()[c.ruta_foto]?.mini ?? null"
+                                     [respaldo]="urls()[c.ruta_foto]?.completa ?? null" [veces]="c.veces" />
+              }
+            </div>
+          } @else {
+            <div class="vacio">
+              <div class="icono-vacio"><ion-icon name="leaf-outline" /></div>
+              <h3>{{ grupoFiltro() ? 'Nada de este grupo todavía' : 'Tu colección está vacía' }}</h3>
+              <p>Toma una foto con el botón de la cámara: cada especie que identifiques aparecerá aquí.</p>
+            </div>
+          }
+        }
+        @case ('observaciones') {
+          @for (s of secciones(); track s.titulo) {
+            <h2 class="seccion-titulo">{{ s.titulo }}</h2>
+            <div class="lista">
+              @for (o of s.items; track o.id) {
+                <a class="item" [routerLink]="['/observacion', o.id]" [style]="estiloGrupo(o.especie)">
+                  <app-foto class="mini" [src]="urls()[o.ruta_foto]?.mini" [respaldo]="urls()[o.ruta_foto]?.completa"
+                            [icono]="o.especie ? iconoEspecie(o.especie) : 'image-outline'" />
+                  <div class="texto">
+                    <strong>{{ nombre(o) }}</strong>
+                    <span class="texto-2">{{ fechaCorta(o.observada_en) }}</span>
+                  </div>
+                  @switch (o.estado) {
+                    @case ('revisar') { <span class="chip acento">En revisión</span> }
+                    @case ('elegida') { <span class="chip info">Elegida</span> }
+                    @case ('corregida') { <span class="chip">Revisada</span> }
+                    @case ('no_identificada') { <span class="chip neutro">Sin resultado</span> }
+                    @default { <span class="chip">{{ porcentaje(o.ia_confianza) }}</span> }
+                  }
+                </a>
+              }
+            </div>
+          } @empty {
+            <div class="vacio">
+              <div class="icono-vacio"><ion-icon name="camera-outline" /></div>
+              <h3>Todavía no tienes observaciones</h3>
+              <p>Usa el botón de la cámara para empezar.</p>
+            </div>
+          }
+          <ion-infinite-scroll [disabled]="!hayMas()" (ionInfinite)="masObservaciones($event)">
+            <ion-infinite-scroll-content loadingSpinner="dots" />
+          </ion-infinite-scroll>
+        }
+        @case ('mapa') {
+          @if (puntos(); as p) {
+            <app-mapa [puntos]="p" altura="calc(100vh - 470px)" textoVacio="Tus observaciones con ubicación aparecerán aquí." />
+          } @else {
+            <div class="esqueleto" style="height: 320px; border-radius: var(--radio-l)"></div>
+          }
+          <p class="nota texto-3"><ion-icon name="lock-closed-outline" />Este mapa solo lo ves tú. Lo que publiques se muestra a los demás con ubicación aproximada.</p>
+        }
+      }
+    }
+  </div>
+</ion-content>
